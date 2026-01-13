@@ -105,8 +105,8 @@ static void realmain(void *arg)
 
     {
         net_config conf = {};
-        sdcard_handle(&conf);
-        InitSettingsfromQspi();
+        //sdcard_handle(&conf);
+        InitSettingsfromQspi(&conf);
         net_setup(&conf);
 
     }

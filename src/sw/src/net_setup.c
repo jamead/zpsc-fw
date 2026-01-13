@@ -79,7 +79,12 @@ void net_setup(net_config *conf)
         if(!dhcp_start(&server_netif)) {
             sys_thread_new("dhcpcd", dhcp_client, NULL, THREAD_STACKSIZE, DEFAULT_THREAD_PRIO);
         } else {
-            fprintf(stderr, "ERROR: Unable to initialize DHCP client.\n");
+            fprintf(stderr, "INFO: Unable to initialize DHCP client. Use Static address instead \n");
+            IP4_ADDR(&server_netif.ip_addr, 192, 168, 1, 10);
+            IP4_ADDR(&server_netif.netmask, 255, 255, 255, 0);
+            IP4_ADDR(&server_netif.gw, 192, 168, 1, 1);
+            netif_set_up(&server_netif);
+            show_ip_info("Static address assigned");
         }
     }
 }

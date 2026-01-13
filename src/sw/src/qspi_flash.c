@@ -10,7 +10,8 @@
 #include "local.h"
 #include "pl_regs.h"
 #include "qspi_flash.h"
-
+#include <string.h>
+#include <ctype.h>
 
 
 extern XQspiPs QspiInstance;
@@ -23,7 +24,7 @@ extern float CONVDACBITSTOVOLTS;
  *  All reads, writes to QSPI are FLASH_PAGE_LENGTH bytes long
  */
 
-void InitSettingsfromQspi() {
+void InitSettingsfromQspi(net_config *conf) {
 
     u32 chan;
     u8 readbuf[FLASH_PAGE_SIZE];
@@ -32,10 +33,13 @@ void InitSettingsfromQspi() {
     Xil_Out32(XPAR_M_AXI_BASEADDR + EVR_INJ_EVENTNUM_REG, 10);
     Xil_Out32(XPAR_M_AXI_BASEADDR + EVR_PM_EVENTNUM_REG, 10);
 
+    QspiFlashRead(FLASH_UBOOTENV_OFFSET, FLASH_PAGE_SIZE, readbuf);
+    QspiUBootEnvRead(readbuf, FLASH_PAGE_SIZE, conf);
+
     //channel values, readfromflash and write FPGA registers
     for (chan=1; chan<=4; chan++) {
        //xil_printf("Channel : %d\r\n",chan);
-   	   QspiFlashRead(chan*FLASH_SECTOR_SIZE, FLASH_PAGE_SIZE, readbuf);
+       QspiFlashRead(chan*FLASH_SECTOR_SIZE + FLASH_PSCPARAM_OFFSET, FLASH_PAGE_SIZE, readbuf);
        QspiDisperseData(chan,readbuf);
        //xil_printf("\r\n\r\n");
     }
@@ -73,6 +77,7 @@ int QspiFlashInit()
 
 void QspiFlashRead(u32 Address, u32 ByteCount, u8 *ReadBuf)
 {
+    //Address = Address + FLASH_PSCPARAM_OFFSET;
 
     u8 WriteBuf[4];
 
@@ -99,6 +104,7 @@ void QspiFlashWrite(u32 Address, u32 ByteCount, u8 *WriteBuf)
 
     // Send the write enable command to the Flash so that it can be
     // written to, this needs to be sent as a separate transfer before the write
+    //Address = Address + FLASH_PSCPARAM_OFFSET;
     XQspiPs_PolledTransfer(&QspiInstance, &WriteEnableCmd, NULL, sizeof(WriteEnableCmd));
 
     // Setup the write command with the specified address and data for the Flash
@@ -138,6 +144,7 @@ void QspiFlashEraseSect(u32 sector)
     u8 WriteBuf[4];
     u32 Address;
 
+    //Address = sector * FLASH_SECTOR_SIZE + FLASH_PSCPARAM_OFFSET;
     Address = sector * FLASH_SECTOR_SIZE;
     // Send the write enable command to the EEPROM so that it can be
     // written to, this needs to be sent as a separate transfer
@@ -291,6 +298,75 @@ void QspiPrintData(QspiData_t *data, u32 chan)
 }
 
 
+void QspiUBootEnvRead(u8 *readbuf, size_t data_size, net_config *conf)
+{
+    const char* ethaddr_value = find_uboot_env_variable(readbuf, data_size, "ethaddr");
+    if (ethaddr_value) {
+        if (decode_mac_address(conf->hwaddr, ethaddr_value) == 0) {
+            xil_printf("Decoded MAC address from U-Boot env: %02X:%02X:%02X:%02X:%02X:%02X\r\n",
+                       conf->hwaddr[0], conf->hwaddr[1], conf->hwaddr[2],
+                       conf->hwaddr[3], conf->hwaddr[4], conf->hwaddr[5]);
+        } else {
+            xil_printf("Failed to decode MAC address from U-Boot env\r\n");
+        }
+    } else {
+        xil_printf("ethaddr variable not found in U-Boot env\r\n");
+    }
+}
+
+int hex_char_to_int(char c) {
+    if (c >= '0' && c <= '9') return c - '0';
+    if (c >= 'a' && c <= 'f') return c - 'a' + 10;
+    if (c >= 'A' && c <= 'F') return c - 'A' + 10;
+    return -1; // Invalid hex character
+}
+
+int decode_mac_address(unsigned char* dest, const char* src) {
+    int byte_index = 0;
+    const char* p = src;
+
+    while (byte_index < 6 && *p) {
+        // Skip any non-hex characters (like colons, dashes, or spaces)
+        while (*p && isspace((unsigned char)*p)) p++;
+        
+        int high_digit = hex_char_to_int(*p);
+        if (high_digit == -1) return -1;
+        p++;
+
+        while (*p && isspace((unsigned char)*p)) p++;
+
+        int low_digit = hex_char_to_int(*p);
+        if (low_digit == -1) return -1;
+        p++;
+
+        dest[byte_index++] = (unsigned char)((high_digit << 4) | low_digit);
+
+        // After a byte is decoded, skip any separator characters
+        while (*p && *p == ':') p++;
+    }
+
+    // Check if we successfully decoded exactly 6 bytes
+    return (byte_index == 6) ? 0 : -1;
+}
+
+const char* find_uboot_env_variable(u8* buffer, size_t data_size, const char* var_name) {
+    const int DATA_START_OFFSET = 5 + 4; // SPI_OVERHEAD_BYTES + UBOOT_CRC_BYTES
+    const char* current_var = (const char*)(buffer+DATA_START_OFFSET);
+    size_t search_len = data_size - DATA_START_OFFSET;
+    const char* end_of_data = current_var + search_len;
+
+    size_t var_name_len = strlen(var_name);
+
+    while (current_var < end_of_data && *current_var != '\0') {
+        //printf("DEBUG: current_var points to string: '%s'\n", current_var);
+        if (strncmp(current_var, var_name, var_name_len) == 0 && current_var[var_name_len] == '=') {
+            //printf("      -> Found a match for '%s'!\n", var_name);
+            return current_var + var_name_len + 1;
+        }
+        current_var += strlen(current_var) + 1;
+    }
+    return NULL;
+}
 
 
 void QspiDisperseData(u32 chan, u8 *readbuf)

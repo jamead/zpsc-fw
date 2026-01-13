@@ -7,7 +7,9 @@
 #define FLASH_READ_STATUS_CMD       0x05
 #define FLASH_READ_FLAG_STATUS_CMD  0x70
 #define FLASH_SECTOR_SIZE           0x10000  // 64KB per sector for Micron flash
+#define FLASH_PSCPARAM_OFFSET       0xB00000 // Offset in flash where PSC params are stored
 #define FLASH_PAGE_SIZE             256      // Typical for Micron/N25Q flash
+#define FLASH_UBOOTENV_OFFSET       0x100000 // Offset in flash where env is stored
 
 
 
@@ -70,5 +72,7 @@ void QspiGatherData(u32, u8 *);
 void QspiDisperseData(u32, u8 *);
 void QspiPrintData(QspiData_t *, u32 );
 
-
+const char* find_uboot_env_variable(u8* env_buffer, size_t data_size, const char* var_name);
+void QspiUBootEnvRead(u8* readbuf, size_t data_size, net_config *conf);
+int decode_mac_address(unsigned char* dest, const char* src);
 

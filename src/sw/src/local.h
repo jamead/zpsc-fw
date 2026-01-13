@@ -47,7 +47,7 @@ void i2c_eeprom_writeBytes(u8, u8 *, u8);
 void eeprom_dump();
 void menu_get_ipaddr();
 void prog_si570();
-void InitSettingsfromQspi();
+void InitSettingsfromQspi(net_config *conf);
 void chan_settings(u32, void *, u32);
 float ReadAccumSA(u32, u32);
 void write_ramptable(u32, void *, u32);
