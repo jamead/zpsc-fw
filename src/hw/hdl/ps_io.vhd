@@ -183,7 +183,7 @@ dac_cntrl.ps1.smooth_phaseinc <= signed(reg_o.ps1_dac_smooth_phaseinc.val.data);
 -- Digital Outputs
 dig_cntrl.ps1.on1 <= reg_o.ps1_digout_on1.val.data(0);
 dig_cntrl.ps1.on2 <= reg_o.ps1_digout_on2.val.data(0);
-dig_cntrl.ps1.on2_pulseenb <= reg_o.ps1_digout_on2_pulseenb.val.data(0);
+dig_cntrl.ps1.on2_pulseenb <= reg_o.polarity.val.data(0);  --pulse on2 for unipolar
 dig_cntrl.ps1.reset <= reg_o.ps1_digout_reset.val.data(0);
 dig_cntrl.ps1.spare <= reg_o.ps1_digout_spare.val.data(0);
 dig_cntrl.ps1.park <= reg_o.ps1_digout_park.val.data(0);
@@ -281,7 +281,7 @@ dac_cntrl.ps2.smooth_phaseinc <= signed(reg_o.ps2_dac_smooth_phaseinc.val.data);
 -- Digital Outputs
 dig_cntrl.ps2.on1 <= reg_o.ps2_digout_on1.val.data(0);
 dig_cntrl.ps2.on2 <= reg_o.ps2_digout_on2.val.data(0);
-dig_cntrl.ps2.on2_pulseenb <= reg_o.ps2_digout_on2_pulseenb.val.data(0);
+dig_cntrl.ps2.on2_pulseenb <= reg_o.polarity.val.data(1);  --pulse on2 for unipolar
 dig_cntrl.ps2.reset <= reg_o.ps2_digout_reset.val.data(0);
 dig_cntrl.ps2.spare <= reg_o.ps2_digout_spare.val.data(0);
 dig_cntrl.ps2.park <= reg_o.ps2_digout_park.val.data(0);
@@ -377,7 +377,7 @@ dac_cntrl.ps3.smooth_phaseinc <= signed(reg_o.ps3_dac_smooth_phaseinc.val.data);
 -- Digital Outputs
 dig_cntrl.ps3.on1 <= reg_o.ps3_digout_on1.val.data(0);
 dig_cntrl.ps3.on2 <= reg_o.ps3_digout_on2.val.data(0);
-dig_cntrl.ps3.on2_pulseenb <= reg_o.ps3_digout_on2_pulseenb.val.data(0);
+dig_cntrl.ps3.on2_pulseenb <= reg_o.polarity.val.data(2);   --pulse on2 for unipolar
 dig_cntrl.ps3.reset <= reg_o.ps3_digout_reset.val.data(0);
 dig_cntrl.ps3.spare <= reg_o.ps3_digout_spare.val.data(0);
 dig_cntrl.ps3.park <= reg_o.ps3_digout_park.val.data(0);
@@ -476,7 +476,7 @@ dac_cntrl.ps4.smooth_phaseinc <= signed(reg_o.ps4_dac_smooth_phaseinc.val.data);
 -- Digital Outputs
 dig_cntrl.ps4.on1 <= reg_o.ps4_digout_on1.val.data(0);
 dig_cntrl.ps4.on2 <= reg_o.ps4_digout_on2.val.data(0);
-dig_cntrl.ps4.on2_pulseenb <= reg_o.ps4_digout_on2_pulseenb.val.data(0);
+dig_cntrl.ps4.on2_pulseenb <= reg_o.polarity.val.data(3);   --pulse on2 for unipolar
 dig_cntrl.ps4.reset <= reg_o.ps4_digout_reset.val.data(0);
 dig_cntrl.ps4.spare <= reg_o.ps4_digout_spare.val.data(0);
 dig_cntrl.ps4.park <= reg_o.ps4_digout_park.val.data(0);
