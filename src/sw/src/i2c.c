@@ -270,24 +270,28 @@ void ReadHardwareFlavor(void)  {
 
 
 	// Polarity
-    val = rdBuf[3];
-    if (val == 0) {
-  		xil_printf("This is a Bipolar PSC\r\n");
-  	    Xil_Out32(XPAR_M_AXI_BASEADDR + POLARITY_REG, 0);
-    }
-    else if (val == 1) {
-        xil_printf("Unipolar\r\n");
-  	    Xil_Out32(XPAR_M_AXI_BASEADDR + POLARITY_REG, 1);
-  		// Enable pulsing for ON2 if unipolar
-  		Xil_Out32(XPAR_M_AXI_BASEADDR + DIGOUT_ON2_PULSEENB_REG + CHBASEADDR*1, 1);
-  		Xil_Out32(XPAR_M_AXI_BASEADDR + DIGOUT_ON2_PULSEENB_REG + CHBASEADDR*2, 1);
-  		Xil_Out32(XPAR_M_AXI_BASEADDR + DIGOUT_ON2_PULSEENB_REG + CHBASEADDR*3, 1);
-  		Xil_Out32(XPAR_M_AXI_BASEADDR + DIGOUT_ON2_PULSEENB_REG + CHBASEADDR*4, 1);
-    }
-    else {
-        xil_printf("Invalid Polarity Setting\r\n");
-  	    Xil_Out32(XPAR_M_AXI_BASEADDR + POLARITY_REG, 2);
-    }
+	// Polarity (4 channels packed into low 4 bits of rdBuf[3])
+	val = rdBuf[3] & 0x0F;   // keep only 4 bits
+
+	// Write the 4-bit field to the polarity register (HW decodes per-channel)
+	Xil_Out32(XPAR_M_AXI_BASEADDR + POLARITY_REG, val);
+
+	// Print per-channel polarity
+	for (int ch = 0; ch < 4; ch++) {
+	    u8 p = (val >> ch) & 0x1;
+
+	    if (p == 0) {
+	        xil_printf("CH%d: Bipolar\r\n", ch);
+	    } else {
+	        xil_printf("CH%d: Unipolar\r\n", ch);
+
+	    }
+	}
+
+	// Optional: sanity check if upper bits were set (indicates bad EEPROM data)
+	if (rdBuf[3] & 0xF0) {
+	    xil_printf("Warning: Polarity byte has unexpected upper bits set: 0x%02X\r\n", rdBuf[3]);
+	}
 
 
     xil_printf("\r\n\r\n");
