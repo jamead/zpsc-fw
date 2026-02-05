@@ -201,7 +201,12 @@ reg {
     field {} val[32];
   } fofb_nonce @0x6C;  
 
-
+ reg {
+    desc="CH3-4 Dual Mode";
+    default sw = rw;
+    default hw = r; 
+    field {} val[1];
+  } ch34_dualmode @0x70;  
 
 
 /**** Channel 1 ****/

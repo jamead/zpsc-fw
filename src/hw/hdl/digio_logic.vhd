@@ -14,7 +14,8 @@ entity digio_logic is
   port (
 	clk                    : in std_logic; 
 	reset                  : in std_logic; 
-	tenkhz_trig            : in std_logic; 
+	tenkhz_trig            : in std_logic;
+	ch34_dualmode          : in std_logic; 
 	fault                  : in t_fault_stat;		  
     rsts                   : in std_logic_vector(19 downto 0);
     rcom                   : out std_logic_vector(19 downto 0);
@@ -89,7 +90,8 @@ dig_stat.ps3.dcct_flt <= rsts(18);
 
 --PS4
 -- Digital Outputs
-rcom(12) <= ps_on1(3) and not fault.ps4.flt_trig;
+rcom(12) <= ps_on1(3) and not fault.ps4.flt_trig when ch34_dualmode = '0' else 
+            ps_on1(2) and not fault.ps3.flt_trig and not fault.ps4.flt_trig when ch34_dualmode = '1';
 rcom(13) <= ps_on2(3); --dig_cntrl.ps4.on2;
 rcom(14) <= dig_cntrl.ps4.reset;
 rcom(15) <= dig_cntrl.ps4.spare; 

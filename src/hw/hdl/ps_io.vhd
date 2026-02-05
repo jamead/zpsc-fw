@@ -41,6 +41,7 @@ entity ps_io is
 	fault_params       : out t_fault_params;
 	fofb_params        : out t_fofb_params;
 	fofb_stat          : in t_fofb_stat;
+	ch34_dualmode      : out std_logic;
 	tenkhz_freq        : in std_logic_vector(31 downto 0);
 	ioc_access_led     : out std_logic;
 	tenhz_datasend_led : out std_logic
@@ -112,6 +113,11 @@ dac_cntrl.numbits_sel <= reg_o.resolution.val.data(0);
 
 ioc_access <= reg_o.ioc_access.val.data(0);
 tenhz_datasend <= reg_o.tenhz_datasend.val.data(0);
+
+--this is used for cases when 2 TDK power supplies are connected in
+--series on channels 3 and 4.   It is used to sync turning on/off and fault logic
+--between channels.
+ch34_dualmode <= reg_o.ch34_dualmode.val.data(0);
 
 fofb_params.ipaddr <= reg_o.fofb_ipaddr.val.data;
 fofb_params.ps1_addr <= reg_o.ps1_fofb_addr.val.data;
