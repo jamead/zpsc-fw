@@ -171,6 +171,17 @@ int main(void) {
 	Xil_Out32(XPAR_M_AXI_BASEADDR + NCO_STEPSIZE_REG, 427853);
 
 
+	Xil_Out32(XPAR_M_AXI_BASEADDR + NUMCHANS_REG, 0);
+	xil_printf("Numchans = %d\r\n", Xil_In32(XPAR_M_AXI_BASEADDR + NUMCHANS_REG));
+	Xil_Out32(XPAR_M_AXI_BASEADDR + NUMCHANS_REG, 1);
+	xil_printf("Numchans = %d\r\n", Xil_In32(XPAR_M_AXI_BASEADDR + NUMCHANS_REG));
+
+	Xil_Out32(XPAR_M_AXI_BASEADDR + CH34_DUALMODE_REG, 1);
+	xil_printf("DualMode = %d\r\n", Xil_In32(XPAR_M_AXI_BASEADDR + CH34_DUALMODE_REG));
+	Xil_Out32(XPAR_M_AXI_BASEADDR + CH34_DUALMODE_REG, 0);
+	xil_printf("DualMode = %d\r\n", Xil_In32(XPAR_M_AXI_BASEADDR + CH34_DUALMODE_REG));
+
+
 	init_i2c();
 	prog_si570();
 	QspiFlashInit();

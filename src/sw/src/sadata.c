@@ -82,11 +82,12 @@ void sadata_push(void *unused)
         sadata.numchans = Xil_In32(XPAR_M_AXI_BASEADDR + NUMCHANS_REG);
         sadata.polarity = Xil_In32(XPAR_M_AXI_BASEADDR + POLARITY_REG);
         sadata.bandwidth = Xil_In32(XPAR_M_AXI_BASEADDR + BANDWIDTH_REG);
+        sadata.ch34_dualmode = Xil_In32(XPAR_M_AXI_BASEADDR + CH34_DUALMODE_REG);
 
         //xil_printf("Resolution: %d\r\n",sadata.resolution);
         //xil_printf("NumChans  : %d\r\n",sadata.numchans);
         //xil_printf("Polarity  : %d\r\n",sadata.polarity);
-        //xil_printf("Bandwidth : %d\r\n",sadata.bandwidth);
+        //xil_printf("DualMode : %d\r\n",sadata.ch34_dualmode);
 
         //read FPGA version (git checksum) from PL register
         sadata.git_shasum = Xil_In32(XPAR_M_AXI_BASEADDR + PRJ_SHASUM);
@@ -144,12 +145,12 @@ void sadata_push(void *unused)
 
 
            //Faults
-           sadata.ps[chan].ovc1_thresh = (s32)Xil_In32(base + OVC1_THRESH_REG) * CONVDACBITSTOVOLTS * scalefactors[chan].dac_dccts;
-           sadata.ps[chan].ovc2_thresh = (s32)Xil_In32(base + OVC2_THRESH_REG) * CONVDACBITSTOVOLTS * scalefactors[chan].dac_dccts;
-           sadata.ps[chan].ovv_thresh = Xil_In32(base + OVV_THRESH_REG) * CONV16BITSTOVOLTS * scalefactors[chan].vout;
-           sadata.ps[chan].err1_thresh = Xil_In32(base + ERR1_THRESH_REG) * CONV16BITSTOVOLTS * scalefactors[chan].error;
-           sadata.ps[chan].err2_thresh = Xil_In32(base + ERR2_THRESH_REG) * CONV16BITSTOVOLTS * scalefactors[chan].error;
-           sadata.ps[chan].ignd_thresh = Xil_In32(base + IGND_THRESH_REG) * CONV16BITSTOVOLTS * scalefactors[chan].ignd;
+           sadata.ps[chan].ovc1_thresh = (s32)Xil_In32(base + OVC1_THRESH_REG) * CONVDACBITSTOVOLTS * fabs(scalefactors[chan].dac_dccts);
+           sadata.ps[chan].ovc2_thresh = (s32)Xil_In32(base + OVC2_THRESH_REG) * CONVDACBITSTOVOLTS * fabs(scalefactors[chan].dac_dccts);
+           sadata.ps[chan].ovv_thresh = Xil_In32(base + OVV_THRESH_REG) * CONV16BITSTOVOLTS * fabs(scalefactors[chan].vout);
+           sadata.ps[chan].err1_thresh = Xil_In32(base + ERR1_THRESH_REG) * CONV16BITSTOVOLTS * fabs(scalefactors[chan].error);
+           sadata.ps[chan].err2_thresh = Xil_In32(base + ERR2_THRESH_REG) * CONV16BITSTOVOLTS * fabs(scalefactors[chan].error);
+           sadata.ps[chan].ignd_thresh = Xil_In32(base + IGND_THRESH_REG) * CONV16BITSTOVOLTS * fabs(scalefactors[chan].ignd);
 
            sadata.ps[chan].ovc1_cntlim = Xil_In32(base + OVC1_CNTLIM_REG) / SAMPLERATE;
            sadata.ps[chan].ovc2_cntlim = Xil_In32(base + OVC2_CNTLIM_REG) / SAMPLERATE;

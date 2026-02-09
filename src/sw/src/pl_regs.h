@@ -27,6 +27,7 @@
 #define FOFB_PACKETS_RCVD_REG    0x64     // Number of valid FOFB packets
 #define FOFB_COMMAND_REG         0x68     // Readback of Command Register of FOFB packet
 #define FOFB_NONCE_REG           0x6C     // Readback of NONCE Register in FOFB packet
+#define CH34_DUALMODE_REG        0x70     // Links Ch3 and Ch4 on and fault registers for Series Connected Supplies
 
 
 // channel registers

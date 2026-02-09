@@ -287,11 +287,28 @@ void ReadHardwareFlavor(void)  {
 
 	    }
 	}
-
 	// Optional: sanity check if upper bits were set (indicates bad EEPROM data)
 	if (rdBuf[3] & 0xF0) {
 	    xil_printf("Warning: Polarity byte has unexpected upper bits set: 0x%02X\r\n", rdBuf[3]);
 	}
+
+
+	// Ch3 - Ch4 Dual Mode
+    val = rdBuf[4];
+    xil_printf("Reading Dual Mode...\r\n");
+	if (val == 0) {
+		// DualMode is enabled
+ 		Xil_Out32(XPAR_M_AXI_BASEADDR + CH34_DUALMODE_REG, 1);
+ 		//xil_printf("Dual Mode Reg = %d\r\n", Xil_In32(XPAR_M_AXI_BASEADDR + CH34_DUALMODE_REG));
+        xil_printf("Dual Mode is enabled for Ch3-Ch4 (Series Connected supplies)\r\n");
+	}
+
+	else {
+		Xil_Out32(XPAR_M_AXI_BASEADDR + CH34_DUALMODE_REG, 0);
+ 		//xil_printf("Dual Mode Reg = %d\r\n", Xil_In32(XPAR_M_AXI_BASEADDR + CH34_DUALMODE_REG));
+	    xil_printf("Dual Mode is disabled for Ch3-Ch4\r\n");
+	}
+
 
 
     xil_printf("\r\n\r\n");

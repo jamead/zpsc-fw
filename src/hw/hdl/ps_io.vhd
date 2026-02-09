@@ -76,6 +76,9 @@ architecture behv of ps_io is
 
   
   attribute mark_debug     : string;
+  attribute mark_debug of ch34_dualmode: signal is "true";
+  attribute mark_debug of ioc_access: signal is "true";
+  --attribute mark_debug of fault_params: signal is "true";
   --attribute mark_debug of dac_cntrl: signal is "true";
   --attribute mark_debug of inj_trig: signal is "true";
 --  attribute mark_debug of soft_trig_prev: signal is "true";  

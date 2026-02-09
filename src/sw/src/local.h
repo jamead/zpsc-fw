@@ -30,7 +30,7 @@ typedef union {
     s32 i;
 } MsgUnion;
 
-
+extern struct netif server_netif;
 
 void net_setup(net_config *conf);
 void discover_setup(void);

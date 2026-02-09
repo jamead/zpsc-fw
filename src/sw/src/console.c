@@ -170,7 +170,20 @@ void display_settings(void)
 	    } else {
 	        xil_printf("Polarity Ch%d: Unipolar\r\n", ch);
 		    }
+	  }
+
+	  // Ch3 - Ch4 Dual Mode
+	  val = rdBuf[4];
+	  if (val == 0) {
+		// DualMode is enabled
+	    xil_printf("Dual Mode is enabled for Ch3-Ch4 (Series Connected supplies)\r\n");
+	  }
+
+	  else {
+		xil_printf("Dual Mode is disabled for Ch3-Ch4\r\n");
 		}
+
+
 
 
 }
@@ -269,6 +282,23 @@ void set_bandwidth(void)
   }
   ReadHardwareFlavor();
 }
+
+
+void set_dualmode(void)
+{
+  u8 val;
+
+  xil_printf("\r\nEnable Dual Mode for Ch3-Ch4: 0 = Enable, 1 = Disable  ");
+  if ((val = get_binary_input()) != (u8)-1) {
+     xil_printf("\r\n");
+	 i2c_eeprom_writeBytes(0x14, &val, 1);
+     vTaskDelay(pdMS_TO_TICKS(10));
+  }
+  ReadHardwareFlavor();
+}
+
+
+
 
 /*
 void set_polarity(void)
@@ -509,13 +539,13 @@ void console_menu()
 		{'C', "Set Resolution (High or Medium)", set_resolution},
 		{'D', "Set Bandwidth (Fast or Slow)", set_bandwidth},
 		{'E', "Set Polarity (Bipolar or Unipolar)", set_polarity},
-		//{'F', "Reboot", reboot},
-	    {'F', "Display Snapshot Stats", print_snapshot_stats},
-	    {'G', "Print FreeRTOS Stats",  printTaskStats},
-	    {'H', "Dump EEPROM", dump_eeprom},
-		{'I', "Clear EEPROM", clear_eeprom},
-		{'J', "Test EEPROM", test_eeprom},
-	    {'K', "Dave Bergman Calibration Mode", receive_console_cmd}
+		{'F', "Set Ch3-Ch4 to Dual Mode", set_dualmode},
+	    {'G', "Display Snapshot Stats", print_snapshot_stats},
+	    {'H', "Print FreeRTOS Stats",  printTaskStats},
+	    {'I', "Dump EEPROM", dump_eeprom},
+		{'J', "Clear EEPROM", clear_eeprom},
+		{'K', "Test EEPROM", test_eeprom},
+	    {'L', "Dave Bergman Calibration Mode", receive_console_cmd}
 	};
 	static const size_t menulen = sizeof(menu)/sizeof(menu_entry_t);
 

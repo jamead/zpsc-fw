@@ -30,11 +30,11 @@ architecture behv of digio_logic is
   signal ps_on1             : std_logic_vector(3 downto 0);
   signal ps_on2             : std_logic_vector(3 downto 0);
 
---  attribute mark_debug     : string;
+  attribute mark_debug     : string;
 --  attribute mark_debug of rcom: signal is "true";
 --  attribute mark_debug of rsts: signal is "true";
---  attribute mark_debug of ps_on1: signal is "true";
---  attribute mark_debug of ps_on2: signal is "true";  
+  attribute mark_debug of ps_on1: signal is "true";
+  attribute mark_debug of ps_on2: signal is "true";  
 --  attribute mark_debug of dig_cntrl: signal is "true";
 
      

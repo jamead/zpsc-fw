@@ -14,8 +14,7 @@
 
 
 
-
-static struct netif server_netif;
+struct netif server_netif;
 
 static
 void show_ip_info(const char *prefix)
