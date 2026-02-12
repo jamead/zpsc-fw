@@ -29,6 +29,7 @@ architecture behv of digio_logic is
 		
   signal ps_on1             : std_logic_vector(3 downto 0);
   signal ps_on2             : std_logic_vector(3 downto 0);
+  signal ps_on1_chan2_dly   : std_logic;
 
   attribute mark_debug     : string;
 --  attribute mark_debug of rcom: signal is "true";
@@ -74,7 +75,8 @@ dig_stat.ps2.dcct_flt <= rsts(17);
 
 --PS3
 -- Digital Outputs
-rcom(8) <= ps_on1(2) and not fault.ps3.flt_trig;
+rcom(8) <= (ps_on1(2) and not fault.ps3.flt_trig) when ch34_dualmode = '0' else
+           (ps_on1(2) and not fault.ps3.flt_trig and not fault.ps4.flt_trig);
 rcom(9) <= ps_on2(2); --dig_cntrl.ps3.on2;
 rcom(10) <= dig_cntrl.ps3.reset;
 rcom(11) <= dig_cntrl.ps3.spare; 
@@ -90,8 +92,8 @@ dig_stat.ps3.dcct_flt <= rsts(18);
 
 --PS4
 -- Digital Outputs
-rcom(12) <= ps_on1(3) and not fault.ps4.flt_trig when ch34_dualmode = '0' else 
-            ps_on1(2) and not fault.ps3.flt_trig and not fault.ps4.flt_trig when ch34_dualmode = '1';
+rcom(12) <= (ps_on1(3) and not fault.ps4.flt_trig) when ch34_dualmode = '0' else 
+            (ps_on1_chan2_dly and not fault.ps3.flt_trig and not fault.ps4.flt_trig);
 rcom(13) <= ps_on2(3); --dig_cntrl.ps4.on2;
 rcom(14) <= dig_cntrl.ps4.reset;
 rcom(15) <= dig_cntrl.ps4.spare; 
@@ -192,6 +194,20 @@ port map(
     en_out     => ps_on2(3), --rcom(12), 
     period_in  => 32d"1000000"  --1ms
 );
+
+
+
+pwr_delay : entity work.pulse_delay
+  generic map (
+    DELAY_COUNTS => 5000000   -- 50 ms @ 100 MHz
+  )
+  port map (
+    clk     => clk,
+    rst     => reset,
+    sig_in  => ps_on1(2),
+    sig_out => ps_on1_chan2_dly
+  );
+
 
 
 
