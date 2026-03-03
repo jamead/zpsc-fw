@@ -59,7 +59,16 @@ dig_stat.ps1.dcct_flt <= rsts(16);
 
 --PS2
 -- Digital Outputs
-rcom(4) <= ps_on1(1) and not fault.ps2.flt_trig;
+rcom(4) <= '1' when
+    (ps_on1(1) = '1')               -- turn on this channel from epics          
+    and (fault.ps2.flt_trig = '0')  -- no faults are present in this channel
+    and (dig_stat.ps1.acon = '1')   -- diode unit on (channel 1)
+    and (dig_stat.ps1.flt1 = '1')   -- fan running on diode unit
+    and (fault.ps1.flt_trig = '0')  -- temps ok  on diode unit
+else
+    '0';
+                   
+                     
 rcom(5) <= ps_on2(1); --dig_cntrl.ps2.on2;
 rcom(6) <= dig_cntrl.ps2.reset;
 rcom(7) <= dig_cntrl.ps2.spare; 
