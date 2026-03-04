@@ -160,7 +160,7 @@ int main(void) {
 
 	u32 i, base;
 
-    xil_printf("Power Supply Controller\r\n");
+    xil_printf("Power Supply Controller  -   B4 Diode PSC\r\n");
     print_firmware_version();
 
 

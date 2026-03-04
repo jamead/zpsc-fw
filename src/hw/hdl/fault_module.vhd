@@ -36,7 +36,7 @@ begin
 
 
 
-ch1_faults: entity work.fault_block
+ch1_faults: entity work.fault_block_diode
   port map(
     clk => clk,
     reset => reset,
