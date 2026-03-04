@@ -48,7 +48,7 @@ proc setSources {} {
   
   lappend Sources {"../hdl/fault_module.vhd" "VHDL 2008"} 
   lappend Sources {"../hdl/fault_block.vhd" "VHDL 2008"}  
- 
+  lappend Sources {"../hdl/fault_block_diode.vhd" "VHDL 2008"} 
   
   lappend Sources {"../hdl/digio_logic.vhd" "VHDL 2008"} 
   lappend Sources {"../hdl/pulse_enable.vhd" "VHDL 2008"} 
