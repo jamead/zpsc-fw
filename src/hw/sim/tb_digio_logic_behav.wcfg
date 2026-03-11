@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wave_config>
+   <wave_state>
+   </wave_state>
+   <db_ref_list>
+      <db_ref path="tb_digio_logic_behav.wdb" id="1">
+         <top_modules>
+            <top_module name="glbl" />
+            <top_module name="psc_pkg" />
+            <top_module name="tb_digio_logic" />
+         </top_modules>
+      </db_ref>
+   </db_ref_list>
+   <zoom_setting>
+      <ZoomStartTime time="669.171464627 ms"></ZoomStartTime>
+      <ZoomEndTime time="1,637.171464628 ms"></ZoomEndTime>
+      <Cursor1Time time="1,877.954325000 ms"></Cursor1Time>
+   </zoom_setting>
+   <column_width_setting>
+      <NameColumnWidth column_width="164"></NameColumnWidth>
+      <ValueColumnWidth column_width="78"></ValueColumnWidth>
+   </column_width_setting>
+   <WVObjectSize size="8" />
+   <wvobject type="logic" fp_name="/tb_digio_logic/ch34_dualmode">
+      <obj_property name="ElementShortName">ch34_dualmode</obj_property>
+      <obj_property name="ObjectShortName">ch34_dualmode</obj_property>
+   </wvobject>
+   <wvobject fp_name="divider56" type="divider">
+      <obj_property name="label">Ch3</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_digio_logic/dut/dig_cntrl.ps3.on1">
+      <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="ElementShortName">.on1</obj_property>
+      <obj_property name="ObjectShortName">.on1</obj_property>
+      <obj_property name="label">epics On1</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_digio_logic/dut/rcom[8]">
+      <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="ElementShortName">[8]</obj_property>
+      <obj_property name="ObjectShortName">[8]</obj_property>
+      <obj_property name="label">ps3_on1 (rcom8)</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_digio_logic/dut/fault.ps3.flt_trig">
+      <obj_property name="ElementShortName">.flt_trig</obj_property>
+      <obj_property name="ObjectShortName">.flt_trig</obj_property>
+   </wvobject>
+   <wvobject fp_name="divider59" type="divider">
+      <obj_property name="label">Ch4</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_digio_logic/rcom[12]">
+      <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="ElementShortName">[12]</obj_property>
+      <obj_property name="ObjectShortName">[12]</obj_property>
+      <obj_property name="label">ps4_on1 (rcom12)</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_digio_logic/dut/fault.ps4.flt_trig">
+      <obj_property name="ElementShortName">.flt_trig</obj_property>
+      <obj_property name="ObjectShortName">.flt_trig</obj_property>
+   </wvobject>
+</wave_config>

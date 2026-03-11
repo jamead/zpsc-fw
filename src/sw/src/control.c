@@ -505,20 +505,20 @@ void chan_settings(u32 chan, void *msg, u32 msglen) {
 
         case OVC1_THRESH_MSG:
    	        printf("Setting OVC1 Threshold CH%d :   Value=%f\r\n",(int)chan,data.f);
-   	        scaled_val = data.f*CONVVOLTSTODACBITS / scalefactors[chan-1].dac_dccts;
+   	        scaled_val = fabs(data.f*CONVVOLTSTODACBITS) / fabs(scalefactors[chan-1].dac_dccts);
    	        xil_printf("ScaledVal: %d\r\n", scaled_val);
    	        Xil_Out32(XPAR_M_AXI_BASEADDR + OVC1_THRESH_REG + chan*CHBASEADDR, scaled_val);
    	        break;
 
         case OVC2_THRESH_MSG:
    	        printf("Setting OVC2 Threshold CH%d :   Value=%f\r\n",(int)chan,data.f);
-   	        scaled_val = data.f*CONVVOLTSTODACBITS / scalefactors[chan-1].dac_dccts;
+   	        scaled_val = fabs(data.f*CONVVOLTSTODACBITS) / fabs(scalefactors[chan-1].dac_dccts);
    	        Xil_Out32(XPAR_M_AXI_BASEADDR + OVC2_THRESH_REG + chan*CHBASEADDR, scaled_val);
    	        break;
 
         case OVV_THRESH_MSG:
    	        printf("Setting OVV Threshold CH%d :   Value=%f\r\n",(int)chan,data.f);
-   	        scaled_val = data.f*CONVVOLTSTO16BITS / scalefactors[chan-1].vout;
+   	        scaled_val = fabs(data.f*CONVVOLTSTO16BITS) / fabs(scalefactors[chan-1].vout);
    	        xil_printf("OVV=%d\r\n",scaled_val);
    	        if (scaled_val >= 32767) scaled_val = 32767;
    	        Xil_Out32(XPAR_M_AXI_BASEADDR + OVV_THRESH_REG + chan*CHBASEADDR, scaled_val);
@@ -526,21 +526,21 @@ void chan_settings(u32 chan, void *msg, u32 msglen) {
 
         case ERR1_THRESH_MSG:
    	        printf("Setting Err1 Threshold CH%d :   Value=%f\r\n",(int)chan,data.f);
-   	        scaled_val = data.f*CONVVOLTSTO16BITS / scalefactors[chan-1].error;
+   	        scaled_val = fabs(data.f*CONVVOLTSTO16BITS) / fabs(scalefactors[chan-1].error);
    	        if (scaled_val >= 32767) scaled_val = 32767;
    	        Xil_Out32(XPAR_M_AXI_BASEADDR + ERR1_THRESH_REG + chan*CHBASEADDR, scaled_val);
    	        break;
 
         case ERR2_THRESH_MSG:
    	        printf("Setting Err2 Threshold CH%d :   Value=%f\r\n",(int)chan,data.f);
-   	        scaled_val = data.f*CONVVOLTSTO16BITS / scalefactors[chan-1].error;
+   	        scaled_val = fabs(data.f*CONVVOLTSTO16BITS) / fabs(scalefactors[chan-1].error);
    	        if (scaled_val >= 32767) scaled_val = 32767;
    	        Xil_Out32(XPAR_M_AXI_BASEADDR + ERR2_THRESH_REG + chan*CHBASEADDR, scaled_val);
    	        break;
 
         case IGND_THRESH_MSG:
    	        printf("Setting Ignd Threshold CH%d :   Value=%f\r\n",(int)chan,data.f);
-   	        scaled_val = data.f*CONVVOLTSTO16BITS / scalefactors[chan-1].error;
+   	        scaled_val = fabs(data.f*CONVVOLTSTO16BITS) / fabs(scalefactors[chan-1].error);
    	        if (scaled_val >= 32767) scaled_val = 32767;
    	        Xil_Out32(XPAR_M_AXI_BASEADDR + IGND_THRESH_REG + chan*CHBASEADDR, scaled_val);
    	        break;

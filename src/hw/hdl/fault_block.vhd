@@ -70,7 +70,8 @@ architecture arch of fault_block is
 
 
   --debug signals (connect to ila)
---   attribute mark_debug                 : string;
+   attribute mark_debug                 : string;
+   attribute mark_debug of fault_params: signal is "true";
 --   attribute mark_debug of clear_pulse: signal is "true";
 --   attribute mark_debug of re: signal is "true";
 --   attribute mark_debug of re_reg: signal is "true";

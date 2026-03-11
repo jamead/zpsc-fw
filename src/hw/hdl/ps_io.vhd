@@ -41,6 +41,7 @@ entity ps_io is
 	fault_params       : out t_fault_params;
 	fofb_params        : out t_fofb_params;
 	fofb_stat          : in t_fofb_stat;
+	ch34_dualmode      : out std_logic;
 	tenkhz_freq        : in std_logic_vector(31 downto 0);
 	ioc_access_led     : out std_logic;
 	tenhz_datasend_led : out std_logic
@@ -75,6 +76,9 @@ architecture behv of ps_io is
 
   
   attribute mark_debug     : string;
+  attribute mark_debug of ch34_dualmode: signal is "true";
+  attribute mark_debug of ioc_access: signal is "true";
+  --attribute mark_debug of fault_params: signal is "true";
   --attribute mark_debug of dac_cntrl: signal is "true";
   --attribute mark_debug of inj_trig: signal is "true";
 --  attribute mark_debug of soft_trig_prev: signal is "true";  
@@ -112,6 +116,11 @@ dac_cntrl.numbits_sel <= reg_o.resolution.val.data(0);
 
 ioc_access <= reg_o.ioc_access.val.data(0);
 tenhz_datasend <= reg_o.tenhz_datasend.val.data(0);
+
+--this is used for cases when 2 TDK power supplies are connected in
+--series on channels 3 and 4.   It is used to sync turning on/off and fault logic
+--between channels.
+ch34_dualmode <= reg_o.ch34_dualmode.val.data(0);
 
 fofb_params.ipaddr <= reg_o.fofb_ipaddr.val.data;
 fofb_params.ps1_addr <= reg_o.ps1_fofb_addr.val.data;
@@ -183,7 +192,7 @@ dac_cntrl.ps1.smooth_phaseinc <= signed(reg_o.ps1_dac_smooth_phaseinc.val.data);
 -- Digital Outputs
 dig_cntrl.ps1.on1 <= reg_o.ps1_digout_on1.val.data(0);
 dig_cntrl.ps1.on2 <= reg_o.ps1_digout_on2.val.data(0);
-dig_cntrl.ps1.on2_pulseenb <= reg_o.ps1_digout_on2_pulseenb.val.data(0);
+dig_cntrl.ps1.on2_pulseenb <= reg_o.polarity.val.data(0);  --pulse on2 for unipolar
 dig_cntrl.ps1.reset <= reg_o.ps1_digout_reset.val.data(0);
 dig_cntrl.ps1.spare <= reg_o.ps1_digout_spare.val.data(0);
 dig_cntrl.ps1.park <= reg_o.ps1_digout_park.val.data(0);
@@ -281,7 +290,7 @@ dac_cntrl.ps2.smooth_phaseinc <= signed(reg_o.ps2_dac_smooth_phaseinc.val.data);
 -- Digital Outputs
 dig_cntrl.ps2.on1 <= reg_o.ps2_digout_on1.val.data(0);
 dig_cntrl.ps2.on2 <= reg_o.ps2_digout_on2.val.data(0);
-dig_cntrl.ps2.on2_pulseenb <= reg_o.ps2_digout_on2_pulseenb.val.data(0);
+dig_cntrl.ps2.on2_pulseenb <= reg_o.polarity.val.data(1);  --pulse on2 for unipolar
 dig_cntrl.ps2.reset <= reg_o.ps2_digout_reset.val.data(0);
 dig_cntrl.ps2.spare <= reg_o.ps2_digout_spare.val.data(0);
 dig_cntrl.ps2.park <= reg_o.ps2_digout_park.val.data(0);
@@ -377,7 +386,7 @@ dac_cntrl.ps3.smooth_phaseinc <= signed(reg_o.ps3_dac_smooth_phaseinc.val.data);
 -- Digital Outputs
 dig_cntrl.ps3.on1 <= reg_o.ps3_digout_on1.val.data(0);
 dig_cntrl.ps3.on2 <= reg_o.ps3_digout_on2.val.data(0);
-dig_cntrl.ps3.on2_pulseenb <= reg_o.ps3_digout_on2_pulseenb.val.data(0);
+dig_cntrl.ps3.on2_pulseenb <= reg_o.polarity.val.data(2);   --pulse on2 for unipolar
 dig_cntrl.ps3.reset <= reg_o.ps3_digout_reset.val.data(0);
 dig_cntrl.ps3.spare <= reg_o.ps3_digout_spare.val.data(0);
 dig_cntrl.ps3.park <= reg_o.ps3_digout_park.val.data(0);
@@ -476,7 +485,7 @@ dac_cntrl.ps4.smooth_phaseinc <= signed(reg_o.ps4_dac_smooth_phaseinc.val.data);
 -- Digital Outputs
 dig_cntrl.ps4.on1 <= reg_o.ps4_digout_on1.val.data(0);
 dig_cntrl.ps4.on2 <= reg_o.ps4_digout_on2.val.data(0);
-dig_cntrl.ps4.on2_pulseenb <= reg_o.ps4_digout_on2_pulseenb.val.data(0);
+dig_cntrl.ps4.on2_pulseenb <= reg_o.polarity.val.data(3);   --pulse on2 for unipolar
 dig_cntrl.ps4.reset <= reg_o.ps4_digout_reset.val.data(0);
 dig_cntrl.ps4.spare <= reg_o.ps4_digout_spare.val.data(0);
 dig_cntrl.ps4.park <= reg_o.ps4_digout_park.val.data(0);

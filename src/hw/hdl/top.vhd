@@ -180,7 +180,8 @@ architecture behv of top is
    signal tenhz_datasend_led    : std_logic;
 
    signal sa_trig_stretch       : std_logic;
-   
+
+   signal ch34_dualmode         : std_logic;   
   
    --debug signals (connect to ila)
    attribute mark_debug                 : string;
@@ -331,6 +332,7 @@ dig_io: entity work.digio_logic
     clk => pl_clk0,
     reset => pl_reset,
     tenkhz_trig => tenkhz_trig,
+    ch34_dualmode => ch34_dualmode,
     fault => fault_stat,   
     rsts => rsts,
     rcom => rcom,
@@ -379,6 +381,7 @@ ps_regs: entity work.ps_io
     fofb_params => fofb_params,
 	fofb_stat => fofb_stat,
 	tenkhz_freq => tenkhz_freq,
+	ch34_dualmode => ch34_dualmode,
     ioc_access_led => ioc_access_led,
     tenhz_datasend_led => tenhz_datasend_led               
   );

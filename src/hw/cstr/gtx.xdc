@@ -68,3 +68,4 @@ set_property LOC GTXE2_CHANNEL_X0Y1 [get_cells fofb/fofb_phy/phy_sfp1_tx/U0/tran
 
 
 
+

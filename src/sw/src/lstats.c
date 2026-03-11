@@ -25,6 +25,8 @@ void lstats_push(void *unused)
 {
     (void)unused;
 
+    char ip_addr[16];
+
     while(1) {
         vTaskDelay(pdMS_TO_TICKS(1000));
 
@@ -114,6 +116,17 @@ void lstats_push(void *unused)
             msg.sensors.vccint = htonf(XSysMon_RawToVoltage(XSysMon_GetAdcData(&xmon, XSM_CH_VCCINT)));
             msg.sensors.vccaux = htonf(XSysMon_RawToVoltage(XSysMon_GetAdcData(&xmon, XSM_CH_VCCAUX)));
         }
+
+        // LwIP inet_ntoa() uses a static char[] , so one call at a time
+          //printf("%s\n", inet_ntoa(server_netif.ip_addr.addr));
+
+          strncpy(ip_addr, inet_ntoa(server_netif.ip_addr.addr), sizeof(ip_addr));
+          //printf("/%s", inet_ntoa(server_netif.netmask.addr));
+          //printf(" gw: %s\n", inet_ntoa(server_netif.gw.addr));
+
+
+
+        psc_send(the_server, 103, sizeof(ip_addr), &ip_addr);
         psc_send(the_server, 101, sizeof(msg), &msg);
     }
 }

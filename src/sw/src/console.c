@@ -147,6 +147,7 @@ void display_settings(void)
 	  else
 		  xil_printf("Invalid Setting\r\n");
 
+	  /*
 	  val = rdBuf[3];
 	  xil_printf("Polarity: ");
 	  if (val == 0)
@@ -155,6 +156,33 @@ void display_settings(void)
 		  xil_printf("Unipolar\r\n");
 	  else
 		  xil_printf("Invalid Setting\r\n");
+      */
+
+	  // Polarity
+	  // Polarity (4 channels packed into low 4 bits of rdBuf[3])
+	  val = rdBuf[3] & 0x0F;   // keep only 4 bits
+
+	  // Print per-channel polarity
+	  for (int ch = 0; ch < 4; ch++) {
+	    u8 p = (val >> ch) & 0x1;
+	    if (p == 0) {
+	        xil_printf("Polarity Ch%d: Bipolar\r\n", ch);
+	    } else {
+	        xil_printf("Polarity Ch%d: Unipolar\r\n", ch);
+		    }
+	  }
+
+	  // Ch3 - Ch4 Dual Mode
+	  val = rdBuf[4];
+	  if (val == 0) {
+		// DualMode is enabled
+	    xil_printf("Dual Mode is enabled for Ch3-Ch4 (Series Connected supplies)\r\n");
+	  }
+
+	  else {
+		xil_printf("Dual Mode is disabled for Ch3-Ch4\r\n");
+		}
+
 
 
 
@@ -256,6 +284,23 @@ void set_bandwidth(void)
 }
 
 
+void set_dualmode(void)
+{
+  u8 val;
+
+  xil_printf("\r\nEnable Dual Mode for Ch3-Ch4: 0 = Enable, 1 = Disable  ");
+  if ((val = get_binary_input()) != (u8)-1) {
+     xil_printf("\r\n");
+	 i2c_eeprom_writeBytes(0x14, &val, 1);
+     vTaskDelay(pdMS_TO_TICKS(10));
+  }
+  ReadHardwareFlavor();
+}
+
+
+
+
+/*
 void set_polarity(void)
 {
   u8 val;
@@ -268,7 +313,37 @@ void set_polarity(void)
   }
   ReadHardwareFlavor();
 }
+*/
 
+void set_polarity(void)
+{
+    u8 val;
+    u8 polarity = 0;
+    int ch;
+
+    xil_printf("\r\nSet Polarity of PSC per channel");
+    xil_printf("\r\n0 = Bipolar, 1 = Unipolar\r\n");
+
+    for (ch = 0; ch < 4; ch++) {
+        xil_printf("\r\nChannel %d polarity: ", ch);
+
+        val = get_binary_input();
+        if (val == (u8)-1) {
+            xil_printf("\r\nAborted.\r\n");
+            return;
+        }
+
+        /* Mask to 1 bit and shift into position */
+        polarity |= (val & 0x1) << ch;
+    }
+
+    xil_printf("\r\nFinal polarity bitfield = 0x%X\r\n", polarity);
+
+    i2c_eeprom_writeBytes(0x13, &polarity, 1);
+    vTaskDelay(pdMS_TO_TICKS(100));
+
+    ReadHardwareFlavor();
+}
 
 
 
@@ -464,13 +539,13 @@ void console_menu()
 		{'C', "Set Resolution (High or Medium)", set_resolution},
 		{'D', "Set Bandwidth (Fast or Slow)", set_bandwidth},
 		{'E', "Set Polarity (Bipolar or Unipolar)", set_polarity},
-		//{'F', "Reboot", reboot},
-	    {'F', "Display Snapshot Stats", print_snapshot_stats},
-	    {'G', "Print FreeRTOS Stats",  printTaskStats},
-	    {'H', "Dump EEPROM", dump_eeprom},
-		{'I', "Clear EEPROM", clear_eeprom},
-		{'J', "Test EEPROM", test_eeprom},
-	    {'K', "Dave Bergman Calibration Mode", receive_console_cmd}
+		{'F', "Set Ch3-Ch4 to Dual Mode", set_dualmode},
+	    {'G', "Display Snapshot Stats", print_snapshot_stats},
+	    {'H', "Print FreeRTOS Stats",  printTaskStats},
+	    {'I', "Dump EEPROM", dump_eeprom},
+		{'J', "Clear EEPROM", clear_eeprom},
+		{'K', "Test EEPROM", test_eeprom},
+	    {'L', "Dave Bergman Calibration Mode", receive_console_cmd}
 	};
 	static const size_t menulen = sizeof(menu)/sizeof(menu_entry_t);
 

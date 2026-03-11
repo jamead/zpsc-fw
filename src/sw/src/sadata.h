@@ -91,6 +91,7 @@ typedef struct SAdataMsg {
 	u32 fofb_nonce;           // PSC Offset 48
 	float tenkhz_freq;        // PSC Offset 52
 	float onehz_freq;         // PSC Offset 56
-	u32 rsvd[10];
+	u32 ch34_dualmode;        // PSC Offset 60
+	u32 rsvd[9];
     struct SAdataChan ps[4];  // PSC Offset 100
 } SAdataMsg;
