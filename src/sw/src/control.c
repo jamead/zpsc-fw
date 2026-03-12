@@ -714,9 +714,9 @@ void chan_settings(u32 chan, void *msg, u32 msglen) {
         	   xil_printf("Writing current values for CH%dto QSPI FLASH..\r\n",chan);
            	   QspiFlashEraseSect(chan);
         	   QspiGatherData(chan, qspibuf);
-        	   QspiFlashWrite(chan*FLASH_SECTOR_SIZE, FLASH_PAGE_SIZE, qspibuf);
+        	   QspiFlashWrite(chan*FLASH_SECTOR_SIZE + FLASH_PSCPARAM_OFFSET, FLASH_PAGE_SIZE, qspibuf);
         	   //read it back out from qspi, just for kicks
-        	   QspiFlashRead(chan*FLASH_SECTOR_SIZE, FLASH_PAGE_SIZE, qspibuf);
+        	   QspiFlashRead(chan*FLASH_SECTOR_SIZE + FLASH_PSCPARAM_OFFSET, FLASH_PAGE_SIZE, qspibuf);
                QspiDisperseData(chan,qspibuf);
         	}
         	break;
@@ -725,7 +725,7 @@ void chan_settings(u32 chan, void *msg, u32 msglen) {
         	xil_printf("Read Qspi Message..\r\n");
         	if (data.u == 1) {
         	   xil_printf("Reading current values for CH%d from QSPI FLASH..\r\n",chan);
-        	   QspiFlashRead(chan*FLASH_SECTOR_SIZE, FLASH_PAGE_SIZE, qspibuf);
+        	   QspiFlashRead(chan*FLASH_SECTOR_SIZE + FLASH_PSCPARAM_OFFSET, FLASH_PAGE_SIZE, qspibuf);
                QspiDisperseData(chan,qspibuf);
         	}
         	break;

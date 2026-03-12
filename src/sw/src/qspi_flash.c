@@ -28,13 +28,16 @@ void InitSettingsfromQspi(net_config *conf) {
 
     u32 chan;
     u8 readbuf[FLASH_PAGE_SIZE];
+    u8 readenv[FLASH_PAGE_SIZE*8];
 
     // global values - hardcode for now
     Xil_Out32(XPAR_M_AXI_BASEADDR + EVR_INJ_EVENTNUM_REG, 10);
     Xil_Out32(XPAR_M_AXI_BASEADDR + EVR_PM_EVENTNUM_REG, 10);
 
-    QspiFlashRead(FLASH_UBOOTENV_OFFSET, FLASH_PAGE_SIZE, readbuf);
-    QspiUBootEnvRead(readbuf, FLASH_PAGE_SIZE, conf);
+    QspiFlashRead(FLASH_UBOOTENV_OFFSET, FLASH_PAGE_SIZE*8, readenv);
+    QspiUBootEnvRead(readenv, FLASH_PAGE_SIZE*8, conf);
+
+    //memset(readbuf, 0, sizeof(readbuf));
 
     //channel values, readfromflash and write FPGA registers
     for (chan=1; chan<=4; chan++) {
@@ -129,7 +132,7 @@ void QspiFlashWrite(u32 Address, u32 ByteCount, u8 *WriteBuf)
         XQspiPs_PolledTransfer(&QspiInstance, ReadStatusCmd, FlashStatus,sizeof(ReadStatusCmd));
         if ((FlashStatus[1] & 0x01) == 0) {
             break;
-	}
+	    }
     }
 
 }
@@ -144,8 +147,8 @@ void QspiFlashEraseSect(u32 sector)
     u8 WriteBuf[4];
     u32 Address;
 
-    //Address = sector * FLASH_SECTOR_SIZE + FLASH_PSCPARAM_OFFSET;
-    Address = sector * FLASH_SECTOR_SIZE;
+    Address = sector * FLASH_SECTOR_SIZE + FLASH_PSCPARAM_OFFSET;
+    //Address = sector * FLASH_SECTOR_SIZE;
     // Send the write enable command to the EEPROM so that it can be
     // written to, this needs to be sent as a separate transfer
     // before the write
@@ -431,14 +434,12 @@ void QspiDisperseData(u32 chan, u8 *readbuf)
     scalefactors[chan-1].regulator = qspidata.sf_regulator;
     scalefactors[chan-1].error = qspidata.sf_error;
 
-    //QspiPrintData(&qspidata, chan);
+    QspiPrintData(&qspidata, chan);
 
 
     //Xil_Out32(base + FAULT_CLEAR_REG, 0x1);
     //usleep(1000);
     //Xil_Out32(base + FAULT_CLEAR_REG, 0);
-
-
 }
 
 

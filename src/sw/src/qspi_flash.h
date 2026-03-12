@@ -9,7 +9,7 @@
 #define FLASH_SECTOR_SIZE           0x10000  // 64KB per sector for Micron flash
 #define FLASH_PSCPARAM_OFFSET       0xB00000 // Offset in flash where PSC params are stored
 #define FLASH_PAGE_SIZE             256      // Typical for Micron/N25Q flash
-#define FLASH_UBOOTENV_OFFSET       0x100000 // Offset in flash where env is stored
+#define FLASH_UBOOTENV_OFFSET       0xC00000 // Offset in flash where env is stored
 
 
 
