@@ -17,6 +17,7 @@ entity fault_block is
 		clk               : in std_logic; 
 		reset             : in std_logic; 
 		tenkhz_trig       : in std_logic; 
+		dig_cntrl         : in t_dig_cntrl_onech;
 		fault_params      : in t_fault_params_onech;
 		dcct_adcs         : in t_dcct_adcs_onech;
 		mon_adcs          : in t_mon_adcs_onech;
@@ -324,17 +325,32 @@ begin
             end if; 
             
             --Bipolar Power Supply Fault
-            --David wanted this live not latched
-            if fault1 = '1'  and clear_pulse = '0' then 
+            if dig_cntrl.polarity = '0' then
+              -- Bipolar case
+              if fault1 = '1'  and clear_pulse = '0' then 
                 if fault1_cnt = unsigned(fault_params.flt1_cntlim) then 
                     fault_reg(7) <= '1'; 
                 else 
                     fault1_cnt <= fault1_cnt +1; 
                 end if; 
-            else 
+              else 
                 fault1_cnt <= (others => '0');
                 fault_reg(7) <= '0'; 
-            end if; 
+              end if; 
+            else 
+              --Unipolar - if dig input bit 1 is low and on1 = 1, means power supply is off
+              if fault1 = '0' and dig_cntrl.on1 = '1' and clear_pulse = '0' then 
+                if fault1_cnt = unsigned(fault_params.flt1_cntlim) then 
+                    fault_reg(7) <= '1'; 
+                else 
+                    fault1_cnt <= fault1_cnt +1; 
+                end if; 
+              else 
+                fault1_cnt <= (others => '0');
+                fault_reg(7) <= '0'; 
+              end if; 
+            end if;            
+            
             
             --Bipolar Heartbeat Fault
             if fault2 = '1' and clear_pulse = '0' then 
