@@ -287,6 +287,7 @@ fault_gen: entity work.fault_module
     clk => pl_clk0,
     reset => pl_reset,
     tenkhz_trig => tenkhz_trig,
+    dig_cntrl => dig_cntrl,
     fault_params => fault_params,
     dcct_adcs => dcct_adcs,
     mon_adcs => mon_adcs,

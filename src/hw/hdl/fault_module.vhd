@@ -14,7 +14,8 @@ entity fault_module is
   port(
     clk             : in std_logic; 
     reset           : in std_logic; 
-    tenkhz_trig     : in std_logic; 		
+    tenkhz_trig     : in std_logic; 
+    dig_cntrl       : in t_dig_cntrl;	
     fault_params    : in t_fault_params; 
     dcct_adcs       : in t_dcct_adcs; 
     mon_adcs        : in t_mon_adcs; 
@@ -42,7 +43,7 @@ ch1_faults: entity work.fault_block
     reset => reset,
     tenkhz_trig => tenkhz_trig,
     fault_params => fault_params.ps1,
-
+    dig_cntrl => dig_cntrl.ps1,
     dcct_adcs => dcct_adcs.ps1,
     mon_adcs => mon_adcs.ps1,
     fault1 => rsts(1),
@@ -65,6 +66,7 @@ ch2_faults: entity work.fault_block
     reset => reset,
     tenkhz_trig => tenkhz_trig,
     fault_params => fault_params.ps2,
+    dig_cntrl => dig_cntrl.ps2,
     dcct_adcs => dcct_adcs.ps2,
     mon_adcs => mon_adcs.ps2,
     fault1 => rsts(5),
@@ -87,6 +89,7 @@ ch3_faults: entity work.fault_block
     reset => reset,
     tenkhz_trig => tenkhz_trig,
     fault_params => fault_params.ps3,
+    dig_cntrl => dig_cntrl.ps3,
     dcct_adcs => dcct_adcs.ps3,
     mon_adcs => mon_adcs.ps3,
     fault1 => rsts(9),
@@ -107,6 +110,7 @@ ch4_faults: entity work.fault_block
     clk => clk,
     reset => reset,
     tenkhz_trig => tenkhz_trig,
+    dig_cntrl => dig_cntrl.ps4,
     fault_params => fault_params.ps4,
     dcct_adcs => dcct_adcs.ps4,
     mon_adcs => mon_adcs.ps4,

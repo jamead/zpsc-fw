@@ -125,7 +125,7 @@ chan1_on2 : entity work.pulse_enable
 port map(
     clk        => clk,
     reset      => reset,
-    en         => dig_cntrl.ps1.on2_pulseenb, 
+    en         => dig_cntrl.ps1.polarity, 
     enable_in  => dig_cntrl.ps1.on2,
     en_out     => ps_on2(0), --rcom(0), 
     period_in  => 32d"1000000"  --1ms 
@@ -147,7 +147,7 @@ chan2_on2 : entity work.pulse_enable
 port map(
     clk        => clk,
     reset      => reset,
-    en         => dig_cntrl.ps2.on2_pulseenb, 
+    en         => dig_cntrl.ps2.polarity, 
     enable_in  => dig_cntrl.ps2.on2,
     en_out     => ps_on2(1), --rcom(4), 
     period_in  => 32d"1000000"  --1ms 
@@ -168,7 +168,7 @@ chan3_on2 : entity work.pulse_enable
 port map(
     clk        => clk,
     reset      => reset,
-    en         => dig_cntrl.ps3.on2_pulseenb, 
+    en         => dig_cntrl.ps3.polarity, --ps3.on2_pulseenb, 
     enable_in  => dig_cntrl.ps3.on2,
     en_out     => ps_on2(2), --rcom(8), 
     period_in  => 32d"1000000"   --1ms
@@ -189,7 +189,7 @@ chan4_on2 : entity work.pulse_enable
 port map(
     clk        => clk,
     reset      => reset,
-    en         => dig_cntrl.ps4.on2_pulseenb, 
+    en         => dig_cntrl.ps4.polarity,  
     enable_in  => dig_cntrl.ps4.on2,
     en_out     => ps_on2(3), --rcom(12), 
     period_in  => 32d"1000000"  --1ms
