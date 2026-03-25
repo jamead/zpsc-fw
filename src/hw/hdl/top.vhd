@@ -399,6 +399,9 @@ adc2ddr : entity work.axi4_write_adc
     dcct_adcs => dcct_adcs,
     mon_adcs => mon_adcs,
     dac_stat => dac_stat,
+    fault_stat => fault_stat,
+    dig_cntrl => dig_cntrl,
+    dig_stat => dig_stat,
     ss_buf_stat => ss_buf_stat       
   );
 

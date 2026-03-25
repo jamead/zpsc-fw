@@ -11,12 +11,16 @@ entity axi4_write_adc is
     reset           : in std_logic;
     trigger         : in std_logic;  -- 10 kHz trigger
 
-    s_axi4_m2s     : out t_pl_snapshot_axi4_m2s;
-    s_axi4_s2m     : in t_pl_snapshot_axi4_s2m;
+    s_axi4_m2s      : out t_pl_snapshot_axi4_m2s;
+    s_axi4_s2m      : in t_pl_snapshot_axi4_s2m;
             
-    dcct_adcs        : in t_dcct_adcs;
-    mon_adcs         : in t_mon_adcs;
-    dac_stat         : in t_dac_stat;
+    dcct_adcs       : in t_dcct_adcs;
+    mon_adcs        : in t_mon_adcs;
+    dac_stat        : in t_dac_stat;
+    dig_cntrl       : in t_dig_cntrl;
+	dig_stat        : in t_dig_stat;
+	fault_stat      : in t_fault_stat;
+    
 	ss_buf_stat      : out t_snapshot_stat        
     );
 end entity axi4_write_adc;
@@ -42,6 +46,10 @@ architecture rtl of axi4_write_adc is
     
     signal datacnt : std_logic_vector(31 downto 0);
     signal prev_trigger : std_logic;
+    signal ps1_digbits : std_logic_vector(31 downto 0);
+    signal ps2_digbits : std_logic_vector(31 downto 0);
+    signal ps3_digbits : std_logic_vector(31 downto 0);
+    signal ps4_digbits : std_logic_vector(31 downto 0);
     
     --debug signals (connect to ila)
 --    attribute mark_debug                 : string;
@@ -54,6 +62,12 @@ architecture rtl of axi4_write_adc is
 --    attribute mark_debug of state : signal is "true"; 
   
   
+  
+  
+  
+  
+  
+
    
 procedure write_word (
     signal wdata   : out std_logic_vector(31 downto 0);
@@ -72,10 +86,29 @@ begin
 end procedure;    
     
   
-    
-
+   
 begin
-  process(clk)
+
+
+ps1_digbits <= dig_stat.ps1.acon & dig_stat.ps1.flt1 & dig_stat.ps1.flt2 & dig_stat.ps1.spare & dig_stat.ps1.dcct_flt & 3d"0" & 
+               dig_cntrl.ps1.on1 & dig_cntrl.ps1.on2 & dig_cntrl.ps1.reset & dig_cntrl.ps1.spare & dig_cntrl.ps1.park & 3d"0" &
+               fault_stat.ps1.lat(15 downto 0);
+
+ps2_digbits <= dig_stat.ps2.acon & dig_stat.ps2.flt1 & dig_stat.ps2.flt2 & dig_stat.ps2.spare & dig_stat.ps2.dcct_flt & 3d"0" & 
+               dig_cntrl.ps2.on1 & dig_cntrl.ps2.on2 & dig_cntrl.ps2.reset & dig_cntrl.ps2.spare & dig_cntrl.ps2.park & 3d"0" &
+               fault_stat.ps2.lat(15 downto 0);
+
+ps3_digbits <= dig_stat.ps3.acon & dig_stat.ps3.flt1 & dig_stat.ps3.flt2 & dig_stat.ps3.spare & dig_stat.ps3.dcct_flt & 3d"0" & 
+               dig_cntrl.ps3.on1 & dig_cntrl.ps3.on2 & dig_cntrl.ps3.reset & dig_cntrl.ps3.spare & dig_cntrl.ps3.park & 3d"0" &
+               fault_stat.ps3.lat(15 downto 0);
+
+ps4_digbits <= dig_stat.ps4.acon & dig_stat.ps4.flt1 & dig_stat.ps4.flt2 & dig_stat.ps4.spare & dig_stat.ps4.dcct_flt & 3d"0" & 
+               dig_cntrl.ps4.on1 & dig_cntrl.ps4.on2 & dig_cntrl.ps4.reset & dig_cntrl.ps4.spare & dig_cntrl.ps4.park & 3d"0" &
+               fault_stat.ps4.lat(15 downto 0);
+
+
+
+process(clk)
   begin
     if rising_edge(clk) then
       if reset = '1' then
@@ -127,8 +160,8 @@ begin
           when PS1_MON3 => write_word(s_axi4_m2s.wdata, s_axi4_m2s.wvalid, state, std_logic_vector(resize(signed(mon_adcs.ps1.ignd), 32)), PS1_MON4);   
           when PS1_MON4 => write_word(s_axi4_m2s.wdata, s_axi4_m2s.wvalid, state, std_logic_vector(resize(signed(mon_adcs.ps1.spare), 32)), PS1_MON5);            
           when PS1_MON5 => write_word(s_axi4_m2s.wdata, s_axi4_m2s.wvalid, state, std_logic_vector(resize(signed(mon_adcs.ps1.ps_reg), 32)), PS1_MON6);   
-          when PS1_MON6 => write_word(s_axi4_m2s.wdata, s_axi4_m2s.wvalid, state, std_logic_vector(resize(signed(mon_adcs.ps1.ps_error), 32)), PS2_DCCT1);   
-
+          when PS1_MON6 => write_word(s_axi4_m2s.wdata, s_axi4_m2s.wvalid, state, std_logic_vector(resize(signed(mon_adcs.ps1.ps_error), 32)), PS2_DCCT1); 
+            
           when PS2_DCCT1 => write_word(s_axi4_m2s.wdata, s_axi4_m2s.wvalid, state, std_logic_vector(resize(signed(dcct_adcs.ps2.dcct0), 32)), PS2_DCCT2); 
           when PS2_DCCT2 => write_word(s_axi4_m2s.wdata, s_axi4_m2s.wvalid, state, std_logic_vector(resize(signed(dcct_adcs.ps2.dcct1), 32)), PS2_MON1); 
           when PS2_MON1 => write_word(s_axi4_m2s.wdata, s_axi4_m2s.wvalid, state, std_logic_vector(resize(signed(mon_adcs.ps2.dacmon), 32)), PS2_MON2);          
@@ -156,10 +189,10 @@ begin
           when PS4_MON5 => write_word(s_axi4_m2s.wdata, s_axi4_m2s.wvalid, state, std_logic_vector(resize(signed(mon_adcs.ps4.ps_reg), 32)), PS4_MON6);   
           when PS4_MON6 => write_word(s_axi4_m2s.wdata, s_axi4_m2s.wvalid, state, std_logic_vector(resize(signed(mon_adcs.ps4.ps_error), 32)), WRD35);
 
-          when WRD35 => write_word(s_axi4_m2s.wdata, s_axi4_m2s.wvalid, state, 32d"35", WRD36);
-          when WRD36 => write_word(s_axi4_m2s.wdata, s_axi4_m2s.wvalid, state, 32d"36", WRD37);
-          when WRD37 => write_word(s_axi4_m2s.wdata, s_axi4_m2s.wvalid, state, 32d"37", WRD38);
-          when WRD38 => write_word(s_axi4_m2s.wdata, s_axi4_m2s.wvalid, state, 32d"38", WRD39);         
+          when WRD35 => write_word(s_axi4_m2s.wdata, s_axi4_m2s.wvalid, state, ps1_digbits, WRD36);
+          when WRD36 => write_word(s_axi4_m2s.wdata, s_axi4_m2s.wvalid, state, ps2_digbits, WRD37);
+          when WRD37 => write_word(s_axi4_m2s.wdata, s_axi4_m2s.wvalid, state, ps3_digbits, WRD38);
+          when WRD38 => write_word(s_axi4_m2s.wdata, s_axi4_m2s.wvalid, state, ps4_digbits, WRD39);         
           when WRD39 => write_word(s_axi4_m2s.wdata, s_axi4_m2s.wvalid, state, 32d"39", WRDLAST);        
 
           --assert wlast

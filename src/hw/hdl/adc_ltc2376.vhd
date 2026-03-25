@@ -144,11 +144,11 @@ begin
      
            when DONE => 
                 if (resolution = '0') then
-                   dcct2 <= resize(signed(shift_reg(35 downto 18)),20); 
-                   dcct1 <= resize(signed(shift_reg(17 downto 0)),20);
+                   dcct2 <= resize(-signed(shift_reg(35 downto 18)),20); 
+                   dcct1 <= resize(-signed(shift_reg(17 downto 0)),20);
                 else
-                   dcct2 <= signed(shift_reg(39 downto 20));
-                   dcct1 <= signed(shift_reg(19 downto 0));
+                   dcct2 <= -signed(shift_reg(39 downto 20));
+                   dcct1 <= -signed(shift_reg(19 downto 0));
                 end if;
                 bit_count <= 0; 
                 data_rdy <= '1';
