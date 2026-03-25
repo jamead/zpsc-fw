@@ -66,6 +66,10 @@ architecture arch of fault_block is
   signal fault_reg_lat           : std_logic_vector(15 downto 0);
   signal fault_reg_lat_mask      : std_logic_vector(15 downto 0);
   signal error_reg_mask          : std_logic_vector(15 downto 0);
+  
+  signal digcntrl_on1_last       : std_logic;
+  signal startup_state           : std_logic;
+  signal run_state               : std_logic;
 
   --signal err_abs                 : signed(15 downto 0); 
 
@@ -210,12 +214,28 @@ begin
             ovv_fault_cnt  <= (others => '0'); 
             err_fault_cnt1 <= (others => '0'); 
             err_fault_cnt2 <= (others => '0'); 
-            ignd_fault_cnt <= (others => '0'); 
+            ignd_fault_cnt <= (others => '0');
+            startup_state <= '0';
+            run_state <= '0'; 
             
         else 
         
     
-        if ten_khz_pulse = '1' then    
+        if ten_khz_pulse = '1' then  
+        
+            -- Determine if in startup state or running state  
+            digcntrl_on1_last <= dig_cntrl.on1;
+            if digcntrl_on1_last = '0' and dig_cntrl.on1 = '1' then
+               startup_state <= '1';
+            end if;
+            if startup_state = '1' and ac_on_in = '1' then
+               run_state <= '1';
+               startup_state <= '0';
+            end if;
+            if run_state = '1' and dig_cntrl.on1 = '0' then
+               run_state <= '0';
+            end if;
+        
           
         --#############################################################
         --Analog Threshold Checks
@@ -324,6 +344,7 @@ begin
                 fault_reg(6) <= '0';
             end if; 
             
+            --Bit 7
             --Bipolar Power Supply Fault
             if dig_cntrl.polarity = '0' then
               -- Bipolar case
@@ -339,7 +360,7 @@ begin
               end if; 
             else 
               --Unipolar - if dig input bit 1 is low and on1 = 1, means power supply is off
-              if fault1 = '0' and dig_cntrl.on1 = '1' and clear_pulse = '0' then 
+              if fault1 = '0' and dig_cntrl.on1 = '1' and run_state = '1' and clear_pulse = '0' then 
                 if fault1_cnt = unsigned(fault_params.flt1_cntlim) then 
                     fault_reg(7) <= '1'; 
                 else 
@@ -376,17 +397,18 @@ begin
                 fault_reg(9) <= '0';  
             end if; 
     
-            if ac_on_out = '1' and ac_on_in = '0' and clear_pulse = '0'  then 
+            -- Bit 10 On Fault
+              if ac_on_out = '1' and ac_on_in = '0' and clear_pulse = '0'  then 
                 if on_fault_cnt = unsigned(fault_params.on_cntlim) then 
                     fault_reg(10) <= '1'; 
                 else 
                     on_fault_cnt <= on_fault_cnt +1; 
                 end if; 
-            else 
+              else 
                 on_fault_cnt <= (others => '0');
                 fault_reg(10) <= '0';  
-            end if;         
-            
+              end if;         
+
                                            
          end if;     
          
