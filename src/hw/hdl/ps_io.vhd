@@ -539,11 +539,56 @@ reg_i.snapshot_addrptr.val.data <= ss_buf_stat.addr_ptr;
 reg_i.snapshot_totaltrigs.val.data <= ss_buf_stat.tenkhzcnt;
 
 
+process (pl_clock)
+begin
+  if rising_edge(pl_clock) then
+
+    -- PS1
+    dac_cntrl.ps1.setpoint_last <= dac_cntrl.ps1.setpoint;
+    if dac_cntrl.ps1.setpoint_last /= dac_cntrl.ps1.setpoint then
+      dac_cntrl.ps1.setpoint_changed <= '1';
+    else
+      dac_cntrl.ps1.setpoint_changed <= '0';
+    end if;
+
+    -- PS2
+    dac_cntrl.ps2.setpoint_last <= dac_cntrl.ps2.setpoint;
+    if dac_cntrl.ps2.setpoint_last /= dac_cntrl.ps2.setpoint then
+      dac_cntrl.ps2.setpoint_changed <= '1';
+    else
+      dac_cntrl.ps2.setpoint_changed <= '0';
+    end if;
+
+    -- PS3
+    dac_cntrl.ps3.setpoint_last <= dac_cntrl.ps3.setpoint;
+    if dac_cntrl.ps3.setpoint_last /= dac_cntrl.ps3.setpoint then
+      dac_cntrl.ps3.setpoint_changed <= '1';
+    else
+      dac_cntrl.ps3.setpoint_changed <= '0';
+    end if;
+
+    -- PS4
+    dac_cntrl.ps4.setpoint_last <= dac_cntrl.ps4.setpoint;
+    if dac_cntrl.ps4.setpoint_last /= dac_cntrl.ps4.setpoint then
+      dac_cntrl.ps4.setpoint_changed <= '1';
+    else
+      dac_cntrl.ps4.setpoint_changed <= '0';
+    end if;
+
+  end if;
+end process;
+
+
+
+
+
+
+
 -- user issues a soft trigger, latch the current snapshot buffer address
-usr_trig(0) <= reg_o.softtrig.val.data(0) or dac_cntrl.ps1.ramprun;
-usr_trig(1) <= reg_o.softtrig.val.data(1) or dac_cntrl.ps2.ramprun;
-usr_trig(2) <= reg_o.softtrig.val.data(2) or dac_cntrl.ps3.ramprun;
-usr_trig(3) <= reg_o.softtrig.val.data(3) or dac_cntrl.ps4.ramprun;
+usr_trig(0) <= reg_o.softtrig.val.data(0) or dac_cntrl.ps1.setpoint_changed;
+usr_trig(1) <= reg_o.softtrig.val.data(1) or dac_cntrl.ps2.setpoint_changed;
+usr_trig(2) <= reg_o.softtrig.val.data(2) or dac_cntrl.ps3.setpoint_changed;
+usr_trig(3) <= reg_o.softtrig.val.data(3) or dac_cntrl.ps4.setpoint_changed;
 flt_trig(0) <= reg_o.testtrig.val.data(0) or fault_stat.ps1.flt_trig;
 flt_trig(1) <= reg_o.testtrig.val.data(1) or fault_stat.ps2.flt_trig;
 flt_trig(2) <= reg_o.testtrig.val.data(2) or fault_stat.ps3.flt_trig;

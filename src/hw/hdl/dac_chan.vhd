@@ -26,6 +26,7 @@ entity dac_chan is
     clk                  : in std_logic; 
     reset                : in std_logic; 
     tenkhz_trig          : in std_logic;
+    dig_cntrl            : in t_dig_cntrl_onech;
     fofb_dac_setpt       : in signed(19 downto 0);
     dac_numbits_sel      : in std_logic;
     dac_cntrl            : in t_dac_cntrl_onech;
@@ -77,7 +78,7 @@ type state_type is (IDLE, RUN_RAMP, UPDATE_DAC);
 begin
 
 --status readbacks
-dac_stat.dac_setpt <= dac_setpt;
+dac_stat.dac_setpt <= signed(dac_data); --dac_setpt;
 dac_stat.active <= ramp_active or smooth_active;
 
 
@@ -156,8 +157,26 @@ gainoff_dac : entity work.dac_gainoffset
   
   
 
--- select 18 bit or 20 bit, put hard limits on dac
-dac_data <= std_logic_vector(dac_setpt) when dac_numbits_sel = '1' else std_logic_vector((dac_setpt(17 downto 0) & "00"));
+-- select 18 bit or 20 bit, put hard limits on dac if unipolar
+process(clk)
+begin
+  if rising_edge(clk) then
+    if dig_cntrl.polarity = '1' then
+      if dac_setpt < to_signed(0, dac_setpt'length) then
+        dac_data <= (others => '0');
+      else
+        if dac_numbits_sel = '1' then
+          dac_data <= std_logic_vector(dac_setpt);
+        else
+          dac_data <= std_logic_vector(dac_setpt(17 downto 0) & "00");
+        end if;
+      end if;
+    end if;
+  end if;
+end process;
+
+     
+--dac_data <= std_logic_vector(dac_setpt) when dac_numbits_sel = '1' else std_logic_vector((dac_setpt(17 downto 0) & "00"));
 
 
 -- write the SPI DAC

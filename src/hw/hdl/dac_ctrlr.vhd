@@ -26,6 +26,7 @@ entity dac_ctrlr is
     clk                  : in std_logic; 
     reset                : in std_logic; 
     tenkhz_trig          : in std_logic;
+    dig_cntrl            : in t_dig_cntrl;
     fofb_data            : in t_fofb_data;
     dac_cntrl            : in t_dac_cntrl;
     dac_stat             : out t_dac_stat;
@@ -54,6 +55,7 @@ dac1: entity work.dac_chan
     clk  => clk,
     reset => reset,
     tenkhz_trig => tenkhz_trig,
+    dig_cntrl => dig_cntrl.ps1,
     fofb_dac_setpt => fofb_data.ps1_setpt,
     dac_numbits_sel => dac_cntrl.numbits_sel,
     dac_cntrl => dac_cntrl.ps1,
@@ -69,6 +71,7 @@ dac2: entity work.dac_chan
     clk => clk,
     reset => reset,
     tenkhz_trig => tenkhz_trig,
+    dig_cntrl => dig_cntrl.ps2,
     fofb_dac_setpt => fofb_data.ps2_setpt,    
     dac_numbits_sel => dac_cntrl.numbits_sel,    
     dac_cntrl => dac_cntrl.ps2,
@@ -83,6 +86,7 @@ dac3: entity work.dac_chan
     clk => clk,
     reset => reset,
     tenkhz_trig => tenkhz_trig,
+    dig_cntrl => dig_cntrl.ps3,
     fofb_dac_setpt => fofb_data.ps3_setpt,    
     dac_numbits_sel => dac_cntrl.numbits_sel,   
     dac_cntrl => dac_cntrl.ps3,
@@ -97,6 +101,7 @@ dac4: entity work.dac_chan
     clk => clk,
     reset => reset,
     tenkhz_trig => tenkhz_trig,
+    dig_cntrl => dig_cntrl.ps4, 
     fofb_dac_setpt => fofb_data.ps4_setpt,   
     dac_numbits_sel => dac_cntrl.numbits_sel,
     dac_cntrl => dac_cntrl.ps4,

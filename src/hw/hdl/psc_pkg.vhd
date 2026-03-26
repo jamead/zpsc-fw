@@ -254,6 +254,8 @@ end record;
 type t_dac_cntrl_onech is record 
   --DAC controls 
   setpoint            : signed(19 downto 0); 
+  setpoint_last       : signed(19 downto 0);
+  setpoint_changed    : std_logic;
   ramprun             : std_logic; 
   ramplen             : std_logic_vector(15 downto 0);
   gain                : signed(23 downto 0);  --Q3.20 format

@@ -21,11 +21,12 @@ entity fault_block is
 		fault_params      : in t_fault_params_onech;
 		dcct_adcs         : in t_dcct_adcs_onech;
 		mon_adcs          : in t_mon_adcs_onech;
-		fault1            : in std_logic; 
-		fault2            : in std_logic; 
-		fault3            : in std_logic; 
+		rsts              : in std_logic_vector(3 downto 0);
+		--ac_on_in          : in std_logic; 
+		--fault1            : in std_logic; 
+		--fault2            : in std_logic; 
+		--fault3            : in std_logic; 
 		dcct_fault        : in std_logic; 
-		ac_on_in          : in std_logic; 
 		ac_on_out         : in std_logic; 
 		park              : in std_logic; 
 		dac_setpoint      : in std_logic_vector(19 downto 0); 
@@ -63,6 +64,7 @@ architecture arch of fault_block is
   signal dac_change_flag         : std_logic; 
   signal re, re_reg              : std_logic;
   signal clear_pulse             : std_logic;
+  signal fault_live              : std_logic_vector(15 downto 0);
   signal fault_reg_lat           : std_logic_vector(15 downto 0);
   signal fault_reg_lat_mask      : std_logic_vector(15 downto 0);
   signal error_reg_mask          : std_logic_vector(15 downto 0);
@@ -80,18 +82,22 @@ architecture arch of fault_block is
 --   attribute mark_debug of clear_pulse: signal is "true";
 --   attribute mark_debug of re: signal is "true";
 --   attribute mark_debug of re_reg: signal is "true";
---   attribute mark_debug of fault_reg: signal is "true";
---   attribute mark_debug of fault_reg_lat: signal is "true";
---   attribute mark_debug of fault_params: signal is "true";
---   attribute mark_debug of fault_stat: signal is "true";
---   attribute mark_debug of dac_change_flag: signal is "true";
+     attribute mark_debug of fault_live: signal is "true";
+     attribute mark_debug of fault_reg: signal is "true";
+     attribute mark_debug of fault_reg_lat: signal is "true";
+     attribute mark_debug of fault_params: signal is "true";
+     attribute mark_debug of fault_stat: signal is "true";
+     attribute mark_debug of dac_change_flag: signal is "true";
+     
+    attribute mark_debug of startup_state: signal is "true";
+    attribute mark_debug of run_state: signal is "true";
 --   attribute mark_debug of fault_reg_lat_mask: signal is "true";
 --   attribute mark_debug of error_reg_mask: signal is "true";
 
 
 begin 
 
-fault_stat.live <= fault_reg;
+fault_stat.live <= fault_live; --fault_reg;
 fault_stat.lat  <= fault_reg_lat_mask; 
 fault_stat.flt_trig <= or fault_reg_lat_mask;
 fault_stat.err_trig <= or error_reg_mask;
@@ -166,7 +172,7 @@ begin
             dff3 <= '0';
             heartbeat <= '0'; 
         else 
-            dff2 <= fault2; 
+            dff2 <= rsts(2); --fault2; 
             dff3 <= dff2; 
             heartbeat <= not(dff2) and dff3; 
         end if; 
@@ -208,6 +214,7 @@ begin
     if rising_edge(clk) then 
         if reset = '1' then 
             fault_reg <= (others => '0'); 
+            fault_live <= (others => '0');
             fault_reg_lat <= (others => '0'); 
             ovc_fault_cnt1 <= (others => '0'); 
             ovc_fault_cnt2 <= (others => '0'); 
@@ -222,13 +229,16 @@ begin
         
     
         if ten_khz_pulse = '1' then  
+            --for test only
+            fault_live(13) <= not fault_live(13);
         
             -- Determine if in startup state or running state  
             digcntrl_on1_last <= dig_cntrl.on1;
             if digcntrl_on1_last = '0' and dig_cntrl.on1 = '1' then
                startup_state <= '1';
             end if;
-            if startup_state = '1' and ac_on_in = '1' then
+            -- if PS commanded to turn on and it does turn on
+            if startup_state = '1' and rsts(1) = '1' then
                run_state <= '1';
                startup_state <= '0';
             end if;
@@ -241,37 +251,43 @@ begin
         --Analog Threshold Checks
         --#############################################################
         --Over Current DCCT 1 Fault Check
-            if (abs(dcct_adcs.dcct0) >= abs(signed(fault_params.ovc1_thresh))) and clear_pulse = '0' then 
+            if (abs(dcct_adcs.dcct0) >= abs(signed(fault_params.ovc1_thresh))) and clear_pulse = '0' then
+                fault_live(0) <= '1'; 
                 if ovc_fault_cnt1 = unsigned(fault_params.ovc1_cntlim) then 
                     fault_reg(0) <= '1'; 
                  else
                     ovc_fault_cnt1 <= ovc_fault_cnt1 +1; 
                  end if; 
-            else 
+            else
+                fault_live(0) <= '0'; 
                 ovc_fault_cnt1 <= (others => '0'); 
                 fault_reg(0) <= '0';
             end if;  
             
             --Over Current DCCT 2 Fault Check
             if (abs(dcct_adcs.dcct1) >= abs(signed(fault_params.ovc2_thresh))) and clear_pulse = '0' then 
+                fault_live(1) <= '1';
                 if ovc_fault_cnt2 = unsigned(fault_params.ovc2_cntlim) then 
                     fault_reg(1) <= '1'; 
                 else 
                     ovc_fault_cnt2 <= ovc_fault_cnt2 +1; 
                 end if; 
             else 
+                fault_live(1) <= '0';
                 ovc_fault_cnt2 <= (others => '0'); 
                 fault_reg(1) <= '0';
             end if;           
             
             --Over Voltage Fault Check
             if (abs(mon_adcs.voltage) >= abs(signed(fault_params.ovv_thresh))) and clear_pulse = '0' then 
+                fault_live(2) <= '1';
                 if ovv_fault_cnt = unsigned(fault_params.ovv_cntlim) then 
                     fault_reg(2) <= '1'; 
                 else 
                     ovv_fault_cnt <= ovv_fault_cnt + 1; 
                 end if; 
             else 
+                fault_live(2) <= '0';
                 ovv_fault_cnt <= (others => '0');
                 fault_reg(2) <= '0';
             end if;  
@@ -282,24 +298,28 @@ begin
             if park = '0' then --error will be high when park enabled 
                 if dac_change_flag = '0' then --ensure that the dac setpoint isn't commanded to change
                      if (abs(mon_adcs.ps_error) >= abs(signed(fault_params.err1_thresh))) and clear_pulse = '0'  then 
+                        fault_live(3) <= '1';
                         if err_fault_cnt1 = unsigned(fault_params.err1_cntlim) then 
                             fault_reg(3) <= '1'; 
                         else 
                             err_fault_cnt1 <= err_fault_cnt1 + 1; 
                         end if; 
                      else 
+                        fault_live(3) <= '0';
                         err_fault_cnt1 <= (others => '0'); 
                         fault_reg(3) <= '0';
                     end if;  
                     
                     --error glitch (only used for triggering a snapshot, not an interlock fault
                     if (abs(mon_adcs.ps_error) >= abs(signed(fault_params.err2_thresh))) and clear_pulse = '0'  then 
+                        fault_live(4) <= '1';
                         if err_fault_cnt2 = unsigned(fault_params.err2_cntlim) then 
                             fault_reg(4) <= '1'; 
                         else 
                             err_fault_cnt2 <= err_fault_cnt2 + 1; 
                         end if; 
                     else 
+                        fault_live(4) <= '0';
                         err_fault_cnt2 <= (others => '0');
                         fault_reg(4) <= '0';
                     end if;   
@@ -319,12 +339,14 @@ begin
             
             --Ground Current Fault Check             
             if (abs(mon_adcs.ignd) >= abs(signed(fault_params.ignd_thresh))) and clear_pulse = '0'  then 
+                fault_live(5) <= '1';
                 if ignd_fault_cnt = unsigned(fault_params.ignd_cntlim) then 
                     fault_reg(5) <= '1'; 
                 else 
                     ignd_fault_cnt <= ignd_fault_cnt +1; 
                 end if; 
-            else 
+            else
+                fault_live(5) <= '0'; 
                 ignd_fault_cnt <= (others => '0'); 
                 fault_reg(5) <= '0';
             end if;       
@@ -334,39 +356,46 @@ begin
         --#############################################################   
          --DCCT Status Fault Check        
             if dcct_fault = '0' and clear_pulse = '0' then 
+                fault_live(6) <= '1';
                 if dcct_fault_cnt = unsigned(fault_params.dcct_cntlim) then 
                     fault_reg(6) <= '1'; 
                 else 
                     dcct_fault_cnt <= dcct_fault_cnt +1; 
                 end if; 
             else 
+                fault_live(6) <= '0';
                 dcct_fault_cnt <= (others => '0');
                 fault_reg(6) <= '0';
             end if; 
             
-            --Bit 7
+            
+            --Fault 7
             --Bipolar Power Supply Fault
             if dig_cntrl.polarity = '0' then
               -- Bipolar case
-              if fault1 = '1'  and clear_pulse = '0' then 
+              if rsts(1) = '1'  and clear_pulse = '0' then
+                fault_live(7) <= '1'; 
                 if fault1_cnt = unsigned(fault_params.flt1_cntlim) then 
                     fault_reg(7) <= '1'; 
                 else 
                     fault1_cnt <= fault1_cnt +1; 
                 end if; 
-              else 
+              else
+                fault_live(7) <= '0'; 
                 fault1_cnt <= (others => '0');
                 fault_reg(7) <= '0'; 
               end if; 
             else 
               --Unipolar - if dig input bit 1 is low and on1 = 1, means power supply is off
-              if fault1 = '0' and dig_cntrl.on1 = '1' and run_state = '1' and clear_pulse = '0' then 
+              if rsts(1) = '0' and dig_cntrl.on1 = '1' and run_state = '1' and clear_pulse = '0' then
+                fault_live(7) <= '1'; 
                 if fault1_cnt = unsigned(fault_params.flt1_cntlim) then 
                     fault_reg(7) <= '1'; 
                 else 
                     fault1_cnt <= fault1_cnt +1; 
                 end if; 
               else 
+                fault_live(7) <= '0';
                 fault1_cnt <= (others => '0');
                 fault_reg(7) <= '0'; 
               end if; 
@@ -374,41 +403,64 @@ begin
             
             
             --Bipolar Heartbeat Fault
-            if fault2 = '1' and clear_pulse = '0' then 
+            if rsts(2) = '1' and clear_pulse = '0' then 
+                fault_live(8) <= '1';
                 if fault2_cnt = unsigned(fault_params.flt2_cntlim) then 
                     fault_reg(8) <= '1'; 
                 else 
                     fault2_cnt <= fault2_cnt +1; 
                 end if; 
             else 
+                fault_live(8) <= '0';
                 fault2_cnt <= (others => '0');
                 fault_reg(8) <= '0'; 
             end if; 
             
-            --External Interlock Fault Check
-            if fault3 = '1' and clear_pulse = '0'  then 
+            -- Bit 9 External Interlock Fault Check
+            if rsts(3) = '1' and clear_pulse = '0'  then 
+                fault_live(9) <= '1';
                 if fault3_cnt = unsigned(fault_params.flt3_cntlim) then 
                     fault_reg(9) <= '1'; 
                 else 
                     fault3_cnt <= fault3_cnt +1; 
                 end if; 
             else 
+                fault_live(9) <= '0';
                 fault3_cnt <= (others => '0');
                 fault_reg(9) <= '0';  
             end if; 
     
+    
             -- Bit 10 On Fault
-              if ac_on_out = '1' and ac_on_in = '0' and clear_pulse = '0'  then 
+            --Bipolar Power Supply Fault
+            if dig_cntrl.polarity = '0' then            
+              if ac_on_out = '1' and rsts(0) = '0' and clear_pulse = '0'  then 
+                fault_live(10) <= '1';
                 if on_fault_cnt = unsigned(fault_params.on_cntlim) then 
                     fault_reg(10) <= '1'; 
                 else 
                     on_fault_cnt <= on_fault_cnt +1; 
                 end if; 
               else 
+                fault_live(10) <= '0';
                 on_fault_cnt <= (others => '0');
                 fault_reg(10) <= '0';  
-              end if;         
-
+              end if;  
+            else       
+              -- Unipolar Case
+              if ac_on_out = '1' and rsts(1) = '0' and clear_pulse = '0'  then 
+                fault_live(10) <= '1';
+                if on_fault_cnt = unsigned(fault_params.on_cntlim) then 
+                    fault_reg(10) <= '1'; 
+                else 
+                    on_fault_cnt <= on_fault_cnt +1; 
+                end if; 
+              else 
+                fault_live(10) <= '0';
+                on_fault_cnt <= (others => '0');
+                fault_reg(10) <= '0';  
+              end if;  
+            end if;
                                            
          end if;     
          
