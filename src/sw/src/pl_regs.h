@@ -28,7 +28,7 @@
 #define FOFB_COMMAND_REG         0x68     // Readback of Command Register of FOFB packet
 #define FOFB_NONCE_REG           0x6C     // Readback of NONCE Register in FOFB packet
 #define CH34_DUALMODE_REG        0x70     // Links Ch3 and Ch4 on and fault registers for Series Connected Supplies
-
+#define MAIN_DIPOLE_MODE_REG     0x74     // Selects if the Power Supply connected is Main Dipole
 
 // channel registers
 #define DCCT1_REG                0X00     // DCCT 0

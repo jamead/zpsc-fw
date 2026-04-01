@@ -184,6 +184,19 @@ void display_settings(void)
 		}
 
 
+	  // Main Dipole Mode
+	  val = rdBuf[5];
+	  if (val == 0) {
+		// Main Dipole Mode is enable
+	    xil_printf("Main Dipole Mode is enabled\r\n");
+	  }
+
+	  else {
+		xil_printf("Main Dipole Mode is disabled\r\n");
+		}
+
+
+
 
 
 }
@@ -297,6 +310,19 @@ void set_dualmode(void)
   ReadHardwareFlavor();
 }
 
+
+void set_maindipole(void)
+{
+  u8 val;
+
+  xil_printf("\r\nEnable Main Dipole Mode 0 = Enable, 1 = Disable  ");
+  if ((val = get_binary_input()) != (u8)-1) {
+     xil_printf("\r\n");
+	 i2c_eeprom_writeBytes(0x15, &val, 1);
+     vTaskDelay(pdMS_TO_TICKS(10));
+  }
+  ReadHardwareFlavor();
+}
 
 
 
@@ -540,12 +566,13 @@ void console_menu()
 		{'D', "Set Bandwidth (Fast or Slow)", set_bandwidth},
 		{'E', "Set Polarity (Bipolar or Unipolar)", set_polarity},
 		{'F', "Set Ch3-Ch4 to Dual Mode", set_dualmode},
-	    {'G', "Display Snapshot Stats", print_snapshot_stats},
-	    {'H', "Print FreeRTOS Stats",  printTaskStats},
-	    {'I', "Dump EEPROM", dump_eeprom},
-		{'J', "Clear EEPROM", clear_eeprom},
-		{'K', "Test EEPROM", test_eeprom},
-	    {'L', "Dave Bergman Calibration Mode", receive_console_cmd}
+		{'G', "Set Main Dipole Mode", set_maindipole},
+	    {'H', "Display Snapshot Stats", print_snapshot_stats},
+	    {'I', "Print FreeRTOS Stats",  printTaskStats},
+	    {'J', "Dump EEPROM", dump_eeprom},
+		{'K', "Clear EEPROM", clear_eeprom},
+		{'L', "Test EEPROM", test_eeprom},
+	    {'M', "Dave Bergman Calibration Mode", receive_console_cmd}
 	};
 	static const size_t menulen = sizeof(menu)/sizeof(menu_entry_t);
 

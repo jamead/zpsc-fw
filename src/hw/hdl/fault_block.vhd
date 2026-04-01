@@ -88,6 +88,7 @@ architecture arch of fault_block is
      attribute mark_debug of fault_params: signal is "true";
      attribute mark_debug of fault_stat: signal is "true";
      attribute mark_debug of dac_change_flag: signal is "true";
+     attribute mark_debug of dig_cntrl: signal is "true";
      
     attribute mark_debug of startup_state: signal is "true";
     attribute mark_debug of run_state: signal is "true";
@@ -370,9 +371,9 @@ begin
             
             
             --Fault 7
-            --Bipolar Power Supply Fault
-            if dig_cntrl.polarity = '0' then
-              -- Bipolar case
+            --Bipolar Power Supply Fault or Main Dipole Fault
+            if dig_cntrl.polarity = '0' or dig_cntrl.main_dipole = '1' then
+              -- Bipolar case or Main Dipole (they have the same logic for this fault)
               if rsts(1) = '1'  and clear_pulse = '0' then
                 fault_live(7) <= '1'; 
                 if fault1_cnt = unsigned(fault_params.flt1_cntlim) then 
@@ -416,6 +417,7 @@ begin
                 fault_reg(8) <= '0'; 
             end if; 
             
+            
             -- Bit 9 External Interlock Fault Check
             if rsts(3) = '1' and clear_pulse = '0'  then 
                 fault_live(9) <= '1';
@@ -432,8 +434,8 @@ begin
     
     
             -- Bit 10 On Fault
-            --Bipolar Power Supply Fault
-            if dig_cntrl.polarity = '0' then            
+            --Bipolar Power Supply Fault or Main Dipole
+            if dig_cntrl.polarity = '0' or dig_cntrl.main_dipole = '1' then            
               if ac_on_out = '1' and rsts(0) = '0' and clear_pulse = '0'  then 
                 fault_live(10) <= '1';
                 if on_fault_cnt = unsigned(fault_params.on_cntlim) then 

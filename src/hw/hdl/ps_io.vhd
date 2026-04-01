@@ -122,6 +122,14 @@ tenhz_datasend <= reg_o.tenhz_datasend.val.data(0);
 --between channels.
 ch34_dualmode <= reg_o.ch34_dualmode.val.data(0);
 
+--this is used for the Main Dipole Backup supply.
+--it has differences in the fault logic and IO bits.
+dig_cntrl.ps1.main_dipole <= reg_o.main_dipole.val.data(0);
+dig_cntrl.ps2.main_dipole <= reg_o.main_dipole.val.data(0);
+dig_cntrl.ps3.main_dipole <= reg_o.main_dipole.val.data(0);
+dig_cntrl.ps4.main_dipole <= reg_o.main_dipole.val.data(0);
+
+
 fofb_params.ipaddr <= reg_o.fofb_ipaddr.val.data;
 fofb_params.ps1_addr <= reg_o.ps1_fofb_addr.val.data;
 fofb_params.ps2_addr <= reg_o.ps2_fofb_addr.val.data;

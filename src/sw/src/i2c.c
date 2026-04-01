@@ -295,7 +295,6 @@ void ReadHardwareFlavor(void)  {
 
 	// Ch3 - Ch4 Dual Mode
     val = rdBuf[4];
-    xil_printf("Reading Dual Mode...\r\n");
 	if (val == 0) {
 		// DualMode is enabled
  		Xil_Out32(XPAR_M_AXI_BASEADDR + CH34_DUALMODE_REG, 1);
@@ -308,6 +307,21 @@ void ReadHardwareFlavor(void)  {
  		//xil_printf("Dual Mode Reg = %d\r\n", Xil_In32(XPAR_M_AXI_BASEADDR + CH34_DUALMODE_REG));
 	    xil_printf("Dual Mode is disabled for Ch3-Ch4\r\n");
 	}
+
+	// Main Dipole Mode
+    val = rdBuf[5];
+
+	if (val == 0) {
+		// Main Dipole Mode is enabled
+ 		Xil_Out32(XPAR_M_AXI_BASEADDR + MAIN_DIPOLE_MODE_REG, 1);
+        xil_printf("Main Dipole Mode is enabled\r\n");
+	}
+
+	else {
+		Xil_Out32(XPAR_M_AXI_BASEADDR + MAIN_DIPOLE_MODE_REG, 0);
+	    xil_printf("Main Dipole Mode is disabled\r\n");
+	}
+
 
 
 

@@ -181,7 +181,8 @@ architecture behv of top is
 
    signal sa_trig_stretch       : std_logic;
 
-   signal ch34_dualmode         : std_logic;   
+   signal ch34_dualmode         : std_logic;  
+
   
    --debug signals (connect to ila)
    attribute mark_debug                 : string;

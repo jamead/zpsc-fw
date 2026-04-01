@@ -208,6 +208,13 @@ reg {
     field {} val[1];
   } ch34_dualmode @0x70;  
 
+ reg {
+    desc="Main Dipole PS";
+    default sw = rw;
+    default hw = r; 
+    field {} val[1];
+  } main_dipole @0x74; 
+
 
 /**** Channel 1 ****/
 

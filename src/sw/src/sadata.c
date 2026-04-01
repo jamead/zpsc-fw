@@ -83,6 +83,7 @@ void sadata_push(void *unused)
         sadata.polarity = Xil_In32(XPAR_M_AXI_BASEADDR + POLARITY_REG);
         sadata.bandwidth = Xil_In32(XPAR_M_AXI_BASEADDR + BANDWIDTH_REG);
         sadata.ch34_dualmode = Xil_In32(XPAR_M_AXI_BASEADDR + CH34_DUALMODE_REG);
+        sadata.main_dipole_mode = Xil_In32(XPAR_M_AXI_BASEADDR + MAIN_DIPOLE_MODE_REG);
 
         //xil_printf("Resolution: %d\r\n",sadata.resolution);
         //xil_printf("NumChans  : %d\r\n",sadata.numchans);
