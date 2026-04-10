@@ -251,9 +251,18 @@ void Set_dac(u32 chan, float new_setpt_amps) {
 
 	u32 dac_mode;
 	s32 new_setpt;
+	u32 polarity_reg, polarity;
 
 	//first get the DAC opmode
 	dac_mode = Xil_In32(XPAR_M_AXI_BASEADDR + DAC_OPMODE_REG + chan*CHBASEADDR);
+
+	//get the polarity (prevent writing negative values if unipolar)
+	polarity_reg = 	Xil_In32(XPAR_M_AXI_BASEADDR + POLARITY_REG);
+
+    // extract polarity bit for this channel
+    polarity = (polarity_reg >> chan) & 0x1;
+
+
 
 	//check boundary conditions (firmware only checking if setpt*gain is above limits, need to fix)
 	if (new_setpt_amps > (9.9999 * scalefactors[chan-1].dac_dccts)) {
@@ -265,8 +274,14 @@ void Set_dac(u32 chan, float new_setpt_amps) {
 	    new_setpt_amps = -10 * scalefactors[chan-1].dac_dccts;
 	}
 
-
 	new_setpt = (s32)(new_setpt_amps * CONVVOLTSTODACBITS / scalefactors[chan-1].dac_dccts);
+
+    // if unipolar, do not allow negative DAC setpoint
+    if ((polarity == 1) && (new_setpt < 0)) {
+        xil_printf("Unipolar mode: clamping negative DAC setpoint to 0\r\n");
+        new_setpt = 0;
+    }
+
 	printf("New DAC Setpt: %f    %d\r\n",new_setpt_amps, (int)new_setpt);
 
 
@@ -277,6 +292,7 @@ void Set_dac(u32 chan, float new_setpt_amps) {
 
 	else if (dac_mode == JUMP) {
         xil_printf("In Jump Mode\r\n");
+        xil_printf("Writing Register...\r\n");
 		Xil_Out32(XPAR_M_AXI_BASEADDR + DAC_SETPT_REG + chan*CHBASEADDR, new_setpt);
 	}
 
@@ -540,7 +556,7 @@ void chan_settings(u32 chan, void *msg, u32 msglen) {
 
         case IGND_THRESH_MSG:
    	        printf("Setting Ignd Threshold CH%d :   Value=%f\r\n",(int)chan,data.f);
-   	        scaled_val = fabs(data.f*CONVVOLTSTO16BITS) / fabs(scalefactors[chan-1].error);
+   	        scaled_val = fabs(data.f*CONVVOLTSTO16BITS) / fabs(scalefactors[chan-1].ignd);
    	        if (scaled_val >= 32767) scaled_val = 32767;
    	        Xil_Out32(XPAR_M_AXI_BASEADDR + IGND_THRESH_REG + chan*CHBASEADDR, scaled_val);
    	        break;

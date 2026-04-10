@@ -53,6 +53,7 @@ type state_type is (IDLE, RUN_RAMP, UPDATE_DAC);
   --signal fofb_dac_setpt   : signed(19 downto 0);
   signal dac_setpt_raw    : signed(19 downto 0);
   signal dac_setpt        : signed(19 downto 0);
+  signal dac_setpt_wlim   : signed(19 downto 0);
   signal ramp_active      : std_logic;
   signal smooth_active    : std_logic;
   signal dac_trig         : std_logic;
@@ -69,6 +70,7 @@ type state_type is (IDLE, RUN_RAMP, UPDATE_DAC);
    attribute mark_debug of smooth_dac_setpt: signal is "true";
    attribute mark_debug of dac_setpt_raw: signal is "true";   
    attribute mark_debug of dac_setpt: signal is "true";
+   attribute mark_debug of dac_setpt_wlim: signal is "true";
    attribute mark_debug of ramp_active: signal is "true";  
    attribute mark_debug of smooth_active: signal is "true";  
    attribute mark_debug of fofb_dac_setpt: signal is "true"; 
@@ -156,21 +158,27 @@ gainoff_dac : entity work.dac_gainoffset
 );
   
   
+--put hard limits on dac if unipolar
+process(clk)
+begin
+  if rising_edge(clk) then
+    if (dig_cntrl.polarity = '1') and (dac_setpt < 0) then
+      dac_setpt_wlim <= (others => '0');
+    else
+      dac_setpt_wlim <= dac_setpt;
+    end if;
+  end if;
+end process;
 
+    
 -- select 18 bit or 20 bit, put hard limits on dac if unipolar
 process(clk)
 begin
   if rising_edge(clk) then
-    if dig_cntrl.polarity = '1' then
-      if dac_setpt < to_signed(0, dac_setpt'length) then
-        dac_data <= (others => '0');
-      else
-        if dac_numbits_sel = '1' then
-          dac_data <= std_logic_vector(dac_setpt);
-        else
-          dac_data <= std_logic_vector(dac_setpt(17 downto 0) & "00");
-        end if;
-      end if;
+    if dac_numbits_sel = '1' then
+      dac_data <= std_logic_vector(dac_setpt_wlim);
+    else
+      dac_data <= std_logic_vector(dac_setpt_wlim(17 downto 0) & "00");
     end if;
   end if;
 end process;
