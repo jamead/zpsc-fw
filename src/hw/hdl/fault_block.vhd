@@ -102,6 +102,7 @@ fault_stat.live <= fault_live; --fault_reg;
 fault_stat.lat  <= fault_reg_lat_mask; 
 fault_stat.flt_trig <= or fault_reg_lat_mask;
 fault_stat.err_trig <= or error_reg_mask;
+fault_stat.trig_ss <= fault_reg(8) when (dig_cntrl.main_dipole = '1') else '0';
 
 
 --This allows the user to ignore faults by setting a bit to zero in the mask register

@@ -329,8 +329,23 @@ s32 SendWfmData(char *msg, TriggerInfo *trig) {
 
 	ReadDMABuf(msg,trig);
 
-	hton_conv(msg,MSGWFMLEN);
-    psc_send(the_server, trig->msgID, MSGWFMLEN, msg);
+	//hton_conv(msg,MSGWFMLEN);
+	//psc_send(the_server, trig->msgID, MSGWFMLEN, msg);
+
+	if ((trig->msgID == MSGINJCH1) || (trig->msgID == MSGINJCH2) ||
+		(trig->msgID == MSGINJCH3) || (trig->msgID == MSGINJCH4)) {
+		//xil_printf("Sending Inj Snapshot:  %d\r\n",trig->msgID);
+		//Inj Trigger only wants 8k points
+		hton_conv(msg,MSGWFMLEN/10);
+		psc_send(the_server, trig->msgID, MSGWFMLEN/10, msg);
+	}
+	else {
+		//xil_printf("Sending Other Snapshot:  %d\r\n",trig->msgID);
+		hton_conv(msg,MSGWFMLEN);
+		psc_send(the_server, trig->msgID, MSGWFMLEN, msg);
+	}
+
+
 
     return 0;
 }
@@ -344,13 +359,14 @@ void ProcessTrigger(TriggerInfo *trig, const char *trig_name) {
 
     if ((trig->addr != trig->addr_last) && (trig->active == 0)) {
         trig->active = 1;
-        trig->addr_last = trig->addr; ;
+        trig->addr_last = trig->addr;
         //xil_printf("Got %s Trigger...   BufPtr Addr: %x\r\n", trig_name, trig->addr);
         trig->postdlycnt = 0;
     }
 
     if (trig->active == 1) {
         if (trig->postdlycnt < (trig->posttrigpts/1000)) {
+        	//this is expecting the loop to run at 10Hz
             (trig->postdlycnt)++;
             //xil_printf("Post Trig Cnt = %d\r\n",trig->postdlycnt);
         } else {
@@ -548,5 +564,5 @@ void snapshot_setup(void)
 {
     printf("INFO: Starting Snapshot data daemon\n");
 
-    sys_thread_new("snapshot", snapshot_push, NULL, THREAD_STACKSIZE, DEFAULT_THREAD_PRIO);
+    sys_thread_new("snapshot", snapshot_push, NULL, THREAD_STACKSIZE, DEFAULT_THREAD_PRIO-1);
 }

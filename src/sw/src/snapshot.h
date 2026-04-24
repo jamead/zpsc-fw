@@ -33,7 +33,7 @@
 #define MSGEVRCH4 103
 
 #define MSGWFMLEN 4000000   //in bytes
-
+//#define MSGWFMLEN 1000000
 
 typedef struct SnapTrigData {
 	u32 lataddr;

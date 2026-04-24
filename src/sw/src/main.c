@@ -195,6 +195,11 @@ int main(void) {
 	Xil_Out32(XPAR_M_AXI_BASEADDR + EVR_RESET_REG, 0xFF);
 	usleep(100);
 	Xil_Out32(XPAR_M_AXI_BASEADDR + EVR_RESET_REG, 0);
+	usleep(100);
+	Xil_Out32(XPAR_M_AXI_BASEADDR + EVR_PM_EVENTNUM_REG, 29);
+	Xil_Out32(XPAR_M_AXI_BASEADDR + EVR_1HZ_EVENTNUM_REG, 32);
+	Xil_Out32(XPAR_M_AXI_BASEADDR + EVR_INJ_EVENTNUM_REG, 32);
+
 
 	// Set FOFB IP Address
     xil_printf("Setting FOFB IP Address to 10.0.142.100...\r\n");

@@ -74,6 +74,7 @@ end record;
 type t_fault_stat_onech is record
   live       : std_logic_vector(15 downto 0);
   lat        : std_logic_vector(15 downto 0);
+  trig_ss    : std_logic;
   flt_trig   : std_logic;
   err_trig   : std_logic;
 end record;
