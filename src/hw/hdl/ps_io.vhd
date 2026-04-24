@@ -77,7 +77,10 @@ architecture behv of ps_io is
   
   attribute mark_debug     : string;
   attribute mark_debug of ch34_dualmode: signal is "true";
+  attribute mark_debug of usr_trig: signal is "true"; 
+  attribute mark_debug of flt_trig: signal is "true";
   attribute mark_debug of ioc_access: signal is "true";
+  
   --attribute mark_debug of fault_params: signal is "true";
   --attribute mark_debug of dac_cntrl: signal is "true";
   --attribute mark_debug of inj_trig: signal is "true";
@@ -88,7 +91,7 @@ architecture behv of ps_io is
 --  attribute mark_debug of flt_trig_prev: signal is "true";  
 --  attribute mark_debug of err_trig: signal is "true";
 --  attribute mark_debug of err_trig_prev: signal is "true"; 
---  attribute mark_debug of evr_trig: signal is "true";
+--  attribute mark_debug of err_trig: signal is "true";
 --  attribute mark_debug of evr_trig_prev: signal is "true"; 
 
 begin
@@ -593,23 +596,23 @@ end process;
 
 
 -- user issues a soft trigger, latch the current snapshot buffer address
-usr_trig(0) <= reg_o.softtrig.val.data(0) or dac_cntrl.ps1.setpoint_changed;
-usr_trig(1) <= reg_o.softtrig.val.data(1) or dac_cntrl.ps2.setpoint_changed;
-usr_trig(2) <= reg_o.softtrig.val.data(2) or dac_cntrl.ps3.setpoint_changed;
-usr_trig(3) <= reg_o.softtrig.val.data(3) or dac_cntrl.ps4.setpoint_changed;
-flt_trig(0) <= reg_o.testtrig.val.data(0) or fault_stat.ps1.flt_trig;
-flt_trig(1) <= reg_o.testtrig.val.data(1) or fault_stat.ps2.flt_trig;
-flt_trig(2) <= reg_o.testtrig.val.data(2) or fault_stat.ps3.flt_trig;
-flt_trig(3) <= reg_o.testtrig.val.data(3) or fault_stat.ps4.flt_trig;
-err_trig(0) <= reg_o.testtrig.val.data(4) or fault_stat.ps1.err_trig;
-err_trig(1) <= reg_o.testtrig.val.data(5) or fault_stat.ps2.err_trig;
-err_trig(2) <= reg_o.testtrig.val.data(6) or fault_stat.ps3.err_trig;
-err_trig(3) <= reg_o.testtrig.val.data(7) or fault_stat.ps4.err_trig;
-inj_trig(0) <= '1' when (reg_o.testtrig.val.data(8) = '1')  or ((evr_trigs.inj_trig = '1') and (dac_cntrl.ps1.mode = "01")) else '0';
-inj_trig(1) <= '1' when (reg_o.testtrig.val.data(9) = '1')  or ((evr_trigs.inj_trig = '1') and (dac_cntrl.ps2.mode = "01")) else '0';
-inj_trig(2) <= '1' when (reg_o.testtrig.val.data(10) = '1') or ((evr_trigs.inj_trig = '1') and (dac_cntrl.ps3.mode = "01")) else '0';
-inj_trig(3) <= '1' when (reg_o.testtrig.val.data(11) = '1') or ((evr_trigs.inj_trig = '1') and (dac_cntrl.ps4.mode = "01")) else '0';
-evr_trig    <= reg_o.testtrig.val.data(12);
+usr_trig(0) <= reg_o.softtrig.val.data(0); --or dac_cntrl.ps1.setpoint_changed;
+usr_trig(1) <= reg_o.softtrig.val.data(1); --or dac_cntrl.ps2.setpoint_changed;
+usr_trig(2) <= reg_o.softtrig.val.data(2); --or dac_cntrl.ps3.setpoint_changed;
+usr_trig(3) <= reg_o.softtrig.val.data(3); --or dac_cntrl.ps4.setpoint_changed;
+flt_trig(0) <= fault_stat.ps1.flt_trig;
+flt_trig(1) <= fault_stat.ps2.flt_trig;
+flt_trig(2) <= fault_stat.ps3.flt_trig;
+flt_trig(3) <= fault_stat.ps4.flt_trig;
+err_trig(0) <= fault_stat.ps1.err_trig;
+err_trig(1) <= fault_stat.ps2.err_trig;
+err_trig(2) <= fault_stat.ps3.err_trig;
+err_trig(3) <= fault_stat.ps4.err_trig;
+inj_trig(0) <= '1' when (evr_trigs.inj_trig = '1') else '0'; --and (dac_cntrl.ps1.mode = "01")) else '0';
+inj_trig(1) <= '1' when (evr_trigs.inj_trig = '1') else '0'; --and (dac_cntrl.ps2.mode = "01")) else '0';
+inj_trig(2) <= '1' when (evr_trigs.inj_trig = '1') else '0'; --and (dac_cntrl.ps3.mode = "01")) else '0';
+inj_trig(3) <= '1' when (evr_trigs.inj_trig = '1') else '0'; --and (dac_cntrl.ps4.mode = "01")) else '0';
+evr_trig    <= '1' when (evr_trigs.pm_trig = '1')  else '0'; 
 
 
 

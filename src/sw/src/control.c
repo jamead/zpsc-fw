@@ -152,6 +152,7 @@ void Calc_WriteSmooth(u32 chan, s32 new_setpt) {
 	u32 smooth_len, num_samples;
 	float phase_inc;
 	float ramp_rate, ramp_duration;
+	u32 maindipole_mode;
 
 	//Cordic Starts at -PI and goes to 0
 	//cordic phase is 1.2.31 format  3.14/4 * 2^31
@@ -162,10 +163,17 @@ void Calc_WriteSmooth(u32 chan, s32 new_setpt) {
 
 	//calculate the length of the smooth length using the ramp rate scale factor
 	ramp_rate = (scalefactors[chan-1].ampspersec / scalefactors[chan-1].dac_dccts) * CONVVOLTSTODACBITS;  // in bits/sec
-	printf("Ramp Rate: %f (Amps/Sec) \r\n",ramp_rate);
+	printf("Ramp Rate: %f (bits/sec) \r\n",ramp_rate);
 
 	ramp_duration = abs(new_setpt - cur_setpt) / ramp_rate;
-	printf("Ramp Duration: %f (sec)\r\n",ramp_duration);
+	printf("Ramps Duration: %f (sec)\r\n",ramp_duration);
+
+	// if in main dipole main, ramp duration minimum length is always 2 seconds
+	maindipole_mode = Xil_In32(XPAR_M_AXI_BASEADDR + MAIN_DIPOLE_MODE_REG);
+	if ((ramp_duration < 2) && (maindipole_mode == 1)) {
+	   ramp_duration = 2;
+	   printf("Adjusted Ramp Duration: %f (sec)\r\n",ramp_duration);
+	}
 	num_samples = ramp_duration * SAMPLERATE;
 	xil_printf("Ramp Duration: %d (samples)\r\n", num_samples);
 
