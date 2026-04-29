@@ -158,7 +158,7 @@ void print_firmware_version()
 
 int main(void) {
 
-	u32 i, base;
+	u32 chan, base;
 
     xil_printf("Power Supply Controller\r\n");
     print_firmware_version();
@@ -171,6 +171,7 @@ int main(void) {
 	Xil_Out32(XPAR_M_AXI_BASEADDR + NCO_STEPSIZE_REG, 427853);
 
 
+	/*
 	Xil_Out32(XPAR_M_AXI_BASEADDR + NUMCHANS_REG, 0);
 	xil_printf("Numchans = %d\r\n", Xil_In32(XPAR_M_AXI_BASEADDR + NUMCHANS_REG));
 	Xil_Out32(XPAR_M_AXI_BASEADDR + NUMCHANS_REG, 1);
@@ -180,7 +181,7 @@ int main(void) {
 	xil_printf("DualMode = %d\r\n", Xil_In32(XPAR_M_AXI_BASEADDR + CH34_DUALMODE_REG));
 	Xil_Out32(XPAR_M_AXI_BASEADDR + CH34_DUALMODE_REG, 0);
 	xil_printf("DualMode = %d\r\n", Xil_In32(XPAR_M_AXI_BASEADDR + CH34_DUALMODE_REG));
-
+    */
 
 	init_i2c();
 	prog_si570();
@@ -205,11 +206,19 @@ int main(void) {
     xil_printf("Setting FOFB IP Address to 10.0.142.100...\r\n");
 	Xil_Out32(XPAR_M_AXI_BASEADDR + FOFB_IPADDR_REG, 0x0A008E64);
 
-	//Set Fault Enable Register - Move to gateware
-	for (i=1;i<5;i++) {
-	       base = XPAR_M_AXI_BASEADDR + i * CHBASEADDR;
-	       Xil_Out32(base + FAULT_MASK_REG,0x1FEF);
+	usleep(100);
+	//Set Fault Enable Registers, clear faults
+	for (chan=1;chan<5;chan++) {
+		xil_printf("Clearing Faults...\r\n");
+	    base = XPAR_M_AXI_BASEADDR + chan * CHBASEADDR;
+	    Xil_Out32(base + FAULT_MASK_REG,0x1FEF);
+	    xil_printf("Fault Mask Reg = %x\r\n",Xil_In32(base + FAULT_MASK_REG));
+	    Xil_Out32(base + FAULT_CLEAR_REG,1);
+	    usleep(10);
+	    Xil_Out32(base + FAULT_CLEAR_REG,0);
 	}
+
+
 
 
 
