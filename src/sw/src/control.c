@@ -145,7 +145,7 @@ void set_eventno(u32 msgVal) {
 	//Xil_Out32(XPAR_M_AXI_BASEADDR + EVR_TRIGNUM_REG, msgVal);
 }
 
-void Calc_WriteSmooth(u32 chan, s32 new_setpt) {
+void Calc_WriteRaisedCosineSmooth(u32 chan, s32 new_setpt) {
 
 
 	s32 cur_setpt;
@@ -153,6 +153,8 @@ void Calc_WriteSmooth(u32 chan, s32 new_setpt) {
 	float phase_inc;
 	float ramp_rate, ramp_duration;
 	u32 maindipole_mode;
+
+    xil_printf("\r\nCalculating Raised Cosine Smooth Ramp Values...\r\n");
 
 	//Cordic Starts at -PI and goes to 0
 	//cordic phase is 1.2.31 format  3.14/4 * 2^31
@@ -196,7 +198,91 @@ void Calc_WriteSmooth(u32 chan, s32 new_setpt) {
 
 }
 
+void Calc_WriteLinearSmooth(u32 chan, s32 new_setpt) {
 
+
+	s32 cur_setpt;
+	u32 smooth_len, num_samples;
+	float phase_inc;
+	float ramp_rate, ramp_duration;
+	u32 maindipole_mode;
+
+	float percent_curved = 0.1f;
+	u32 linear_pts;
+	u32 curved_pts;
+	u32 total_pts;
+	float dy;
+
+    xil_printf("\r\nCalculating Linear Smooth Ramp Values...\r\n");
+    cur_setpt = Xil_In32(XPAR_M_AXI_BASEADDR + DAC_CURRSETPT_REG + chan*CHBASEADDR);
+    printf("Current Setpt: %d    %f\r\n", cur_setpt, cur_setpt*CONVDACBITSTOVOLTS);
+    printf("New Setpt    : %d    %f\r\n", new_setpt, new_setpt*CONVDACBITSTOVOLTS);
+
+	//calculate the length of the smooth length using the ramp rate scale factor
+    ramp_rate = scalefactors[chan-1].ampspersec;
+    printf("Ramp Rate: %f (amps/sec) \r\n",ramp_rate);
+	ramp_rate = (scalefactors[chan-1].ampspersec / scalefactors[chan-1].dac_dccts) * CONVVOLTSTODACBITS;  // in bits/sec
+	printf("Ramp Rate: %f (bits/sec) \r\n",ramp_rate);
+
+	ramp_duration = abs(new_setpt - cur_setpt) / ramp_rate;
+	printf("Ramps Duration: %f (sec)\r\n",ramp_duration);
+
+	// if in main dipole main, ramp duration minimum length is always 2 seconds
+	//maindipole_mode = Xil_In32(XPAR_M_AXI_BASEADDR + MAIN_DIPOLE_MODE_REG);
+	//if ((ramp_duration < 2) && (maindipole_mode == 1)) {
+	//   ramp_duration = 2;
+	//   printf("Adjusted Ramp Duration: %f (sec)\r\n",ramp_duration);
+	//}
+
+	num_samples = ramp_duration * SAMPLERATE;
+	xil_printf("Ramp Duration: %d (samples)\r\n", num_samples);
+
+	smooth_len = (u32)(abs(new_setpt - cur_setpt) / ramp_rate * SAMPLERATE);
+	xil_printf("Smooth Length: %d\r\n",smooth_len);
+
+    //Ramp has 3 sections
+	//Beginning curved section is where step size grows from 0 to dy
+	//Middle Linear section is where step size is always dy
+	//Ending curved section is where step size shrinks from dy to 0
+
+	curved_pts = (u32)(percent_curved * num_samples);
+	linear_pts = num_samples - 2 * curved_pts;
+    total_pts = linear_pts + 2 * curved_pts;
+    dy = ((float)(new_setpt - cur_setpt)) / ((float)linear_pts) / (1.0f + percent_curved);
+
+
+	xil_printf("Linear Numpts: %d\r\n",linear_pts);
+	xil_printf("Curved Numpts: %d\r\n",curved_pts);
+	xil_printf("Total  Numpts: %d\r\n",total_pts);
+	printf("Dy : %f\r\n",dy);
+
+	u32 i;
+	float dy0=0, sp0, sp1=0;
+
+	sp0 = cur_setpt;
+    for (i=0;i<total_pts;i++) {
+       if (i < curved_pts) {
+    	   dy0 = dy*((float)i / (float)curved_pts);
+           sp1 = sp0 + dy0;
+           sp0 = sp1;
+           printf("i: %6d   dy: %f    sp1: %f\r\n",i,dy0,sp1);
+       }
+       if ((i >= curved_pts) & (i < linear_pts + curved_pts)) {
+    	   sp1 = sp0 + dy;
+           sp0 = sp1;
+           printf("i: %6d   dy: %f    sp1: %f\r\n",i,dy,sp1);
+       }
+       if (i > linear_pts + curved_pts) {
+     	    dy0 = dy*((float)(linear_pts+2*curved_pts-i) / (float)curved_pts);
+            sp1 = sp0 + dy0;
+            sp0 = sp1;
+            printf("i: %6d   dy: %f    sp1: %f\r\n",i,dy0,sp1);
+        }
+
+    }
+
+
+}
 
 
 
@@ -295,7 +381,8 @@ void Set_dac(u32 chan, float new_setpt_amps) {
 
 	if (dac_mode == SMOOTH) {
         xil_printf("In Smooth Mode\r\n");
-        Calc_WriteSmooth(chan, new_setpt);
+        Calc_WriteRaisedCosineSmooth(chan, new_setpt);
+        Calc_WriteLinearSmooth(chan, new_setpt);
 	}
 
 	else if (dac_mode == JUMP) {
