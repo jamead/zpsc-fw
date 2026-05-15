@@ -2,7 +2,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-entity smooth_ramp is
+entity smooth_cosine_ramp is
   port (
     clk           : in std_logic;
     reset         : in std_logic;
@@ -17,7 +17,7 @@ entity smooth_ramp is
 end entity;
  
 
-architecture behv of smooth_ramp is
+architecture behv of smooth_cosine_ramp is
 
 
 component cordic_sine

@@ -128,7 +128,7 @@ rampmode: entity work.ramptable_ramp
 
 
 -- In smoothmode, DAC setpoint comes from raised cosine calculation done in fabric
-smoothmode: entity work.smooth_ramp
+smoothmode: entity work.smooth_cosine_ramp
   port map (
     clk => clk,
     reset => reset,

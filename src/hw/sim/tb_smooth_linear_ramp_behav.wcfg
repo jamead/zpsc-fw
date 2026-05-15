@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wave_config>
+   <wave_state>
+   </wave_state>
+   <db_ref_list>
+      <db_ref path="tb_smooth_linear_ramp_behav.wdb" id="1">
+         <top_modules>
+            <top_module name="glbl" />
+            <top_module name="tb_smooth_linear_ramp" />
+         </top_modules>
+      </db_ref>
+   </db_ref_list>
+   <zoom_setting>
+      <ZoomStartTime time="13.333500000 ms"></ZoomStartTime>
+      <ZoomEndTime time="47.865828915 ms"></ZoomEndTime>
+      <Cursor1Time time="80.001000000 ms"></Cursor1Time>
+   </zoom_setting>
+   <column_width_setting>
+      <NameColumnWidth column_width="188"></NameColumnWidth>
+      <ValueColumnWidth column_width="83"></ValueColumnWidth>
+   </column_width_setting>
+   <WVObjectSize size="21" />
+   <wave_markers>
+      <marker label="" time="490935000" />
+   </wave_markers>
+   <wvobject type="logic" fp_name="/tb_smooth_linear_ramp/clk">
+      <obj_property name="ElementShortName">clk</obj_property>
+      <obj_property name="ObjectShortName">clk</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_smooth_linear_ramp/reset">
+      <obj_property name="ElementShortName">reset</obj_property>
+      <obj_property name="ObjectShortName">reset</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_smooth_linear_ramp/tenkhz_trig">
+      <obj_property name="ElementShortName">tenkhz_trig</obj_property>
+      <obj_property name="ObjectShortName">tenkhz_trig</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_smooth_linear_ramp/cur_setpt">
+      <obj_property name="ElementShortName">cur_setpt[19:0]</obj_property>
+      <obj_property name="ObjectShortName">cur_setpt[19:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_smooth_linear_ramp/new_setpt">
+      <obj_property name="ElementShortName">new_setpt[19:0]</obj_property>
+      <obj_property name="ObjectShortName">new_setpt[19:0]</obj_property>
+      <obj_property name="Radix">SIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_smooth_linear_ramp/uut/new_setpt_prev">
+      <obj_property name="ElementShortName">new_setpt_prev[19:0]</obj_property>
+      <obj_property name="ObjectShortName">new_setpt_prev[19:0]</obj_property>
+      <obj_property name="Radix">SIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_smooth_linear_ramp/linear_len">
+      <obj_property name="ElementShortName">linear_len[31:0]</obj_property>
+      <obj_property name="ObjectShortName">linear_len[31:0]</obj_property>
+      <obj_property name="Radix">SIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_smooth_linear_ramp/curved_len">
+      <obj_property name="ElementShortName">curved_len[31:0]</obj_property>
+      <obj_property name="ObjectShortName">curved_len[31:0]</obj_property>
+      <obj_property name="Radix">SIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_smooth_linear_ramp/uut/total_len">
+      <obj_property name="ElementShortName">total_len[31:0]</obj_property>
+      <obj_property name="ObjectShortName">total_len[31:0]</obj_property>
+      <obj_property name="Radix">SIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_smooth_linear_ramp/dy">
+      <obj_property name="ElementShortName">dy[31:0]</obj_property>
+      <obj_property name="ObjectShortName">dy[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_smooth_linear_ramp/dy_per_pt">
+      <obj_property name="ElementShortName">dy_per_pt[31:0]</obj_property>
+      <obj_property name="ObjectShortName">dy_per_pt[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="other" fp_name="/tb_smooth_linear_ramp/uut/state">
+      <obj_property name="ElementShortName">state</obj_property>
+      <obj_property name="ObjectShortName">state</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_smooth_linear_ramp/uut/cnt">
+      <obj_property name="ElementShortName">cnt[31:0]</obj_property>
+      <obj_property name="ObjectShortName">cnt[31:0]</obj_property>
+      <obj_property name="Radix">SIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_smooth_linear_ramp/uut/ramp_curved_active">
+      <obj_property name="ElementShortName">ramp_curved_active</obj_property>
+      <obj_property name="ObjectShortName">ramp_curved_active</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/tb_smooth_linear_ramp/uut/ramp_linear_active">
+      <obj_property name="ElementShortName">ramp_linear_active</obj_property>
+      <obj_property name="ObjectShortName">ramp_linear_active</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_smooth_linear_ramp/uut/dy">
+      <obj_property name="ElementShortName">dy[31:0]</obj_property>
+      <obj_property name="ObjectShortName">dy[31:0]</obj_property>
+      <obj_property name="Radix">REALRADIX</obj_property>
+      <obj_property name="radix_realType">SIGNEDFIXEDPOINTRADIX</obj_property>
+      <obj_property name="radix_fractionWidth">22</obj_property>
+      <obj_property name="radix_otherWidth">0</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_smooth_linear_ramp/dy_per_pt">
+      <obj_property name="ElementShortName">dy_per_pt[31:0]</obj_property>
+      <obj_property name="ObjectShortName">dy_per_pt[31:0]</obj_property>
+      <obj_property name="Radix">REALRADIX</obj_property>
+      <obj_property name="radix_realType">SIGNEDFIXEDPOINTRADIX</obj_property>
+      <obj_property name="radix_fractionWidth">22</obj_property>
+      <obj_property name="radix_otherWidth">0</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_smooth_linear_ramp/uut/dy0">
+      <obj_property name="ElementShortName">dy0[63:0]</obj_property>
+      <obj_property name="ObjectShortName">dy0[63:0]</obj_property>
+      <obj_property name="Radix">REALRADIX</obj_property>
+      <obj_property name="radix_realType">SIGNEDFIXEDPOINTRADIX</obj_property>
+      <obj_property name="radix_fractionWidth">22</obj_property>
+      <obj_property name="radix_otherWidth">0</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_smooth_linear_ramp/uut/setpt_cur">
+      <obj_property name="ElementShortName">setpt_cur[63:0]</obj_property>
+      <obj_property name="ObjectShortName">setpt_cur[63:0]</obj_property>
+      <obj_property name="Radix">REALRADIX</obj_property>
+      <obj_property name="radix_realType">SIGNEDFIXEDPOINTRADIX</obj_property>
+      <obj_property name="radix_fractionWidth">22</obj_property>
+      <obj_property name="radix_otherWidth">0</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_smooth_linear_ramp/uut/setpt_last">
+      <obj_property name="ElementShortName">setpt_last[63:0]</obj_property>
+      <obj_property name="ObjectShortName">setpt_last[63:0]</obj_property>
+      <obj_property name="Radix">REALRADIX</obj_property>
+      <obj_property name="radix_realType">SIGNEDFIXEDPOINTRADIX</obj_property>
+      <obj_property name="radix_fractionWidth">22</obj_property>
+      <obj_property name="radix_otherWidth">0</obj_property>
+      <obj_property name="WaveformStyle">STYLE_ANALOG</obj_property>
+      <obj_property name="CellHeight">400</obj_property>
+      <obj_property name="AnalogYRangeType">ANALOG_YRANGETYPE_AUTO</obj_property>
+      <obj_property name="AnalogYRangeMin">0.000000</obj_property>
+      <obj_property name="AnalogYRRangeMax">0.000000</obj_property>
+      <obj_property name="AnalogInterpolation">ANALOG_INTERPOLATION_HOLD</obj_property>
+      <obj_property name="AnalogOffscale">ANALOG_OFFSCALE_HIDE</obj_property>
+      <obj_property name="AnalogHorizLine">0.000000</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/tb_smooth_linear_ramp/uut/rampout">
+      <obj_property name="ElementShortName">rampout[19:0]</obj_property>
+      <obj_property name="ObjectShortName">rampout[19:0]</obj_property>
+      <obj_property name="Radix">SIGNEDDECRADIX</obj_property>
+      <obj_property name="WaveformStyle">STYLE_ANALOG</obj_property>
+      <obj_property name="CellHeight">100</obj_property>
+   </wvobject>
+</wave_config>

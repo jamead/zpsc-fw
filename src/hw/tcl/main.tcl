@@ -40,7 +40,8 @@ proc setSources {} {
   lappend Sources {"../hdl/dac_chan.vhd" "VHDL 2008"}  
   lappend Sources {"../hdl/dac_ad5781.vhd" "VHDL 2008"}  
   lappend Sources {"../hdl/dac_gainoffset.vhd" "VHDL 2008"}  
-  lappend Sources {"../hdl/smooth_ramp.vhd" "VHDL 2008"} 
+  lappend Sources {"../hdl/smooth_cosine_ramp.vhd" "VHDL 2008"} 
+  lappend Sources {"../hdl/smooth_linear_ramp.vhd" "VHDL 2008"} 
   lappend Sources {"../hdl/ramptable_ramp.vhd" "VHDL 2008"}   
   lappend Sources {"../hdl/smooth_ramp_tb.vhd" "VHDL 2008"}  
   lappend Sources {"../hdl/cordic_sine_tb.vhd" "VHDL 2008"}
