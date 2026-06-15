@@ -215,6 +215,13 @@ reg {
     field {} val[1];
   } main_dipole @0x74; 
 
+ reg {
+    desc="Smooth Ramp Type 0=linear 1=cosine";
+    default sw = rw;
+    default hw = r; 
+    field {} val[1];
+  } smoothramp_type @0x78; 
+
 
 /**** Channel 1 ****/
 
@@ -737,6 +744,51 @@ reg {
   } ps1_fofb_scalefactor @0x328;  
 
 
+reg {
+    desc="PS1 DAC Smooth linear NumPts";
+    default sw = rw;
+    default hw = r;    
+    field {} val[32];
+  } ps1_dac_smooth_linear_len @0x350;  
+
+
+reg {
+    desc="PS1 DAC Smooth curved NumPts";
+    default sw = rw;
+    default hw = r;    
+    field {} val[32];
+  } ps1_dac_smooth_curved_len @0x354;  
+
+
+reg {
+    desc="PS1 Smooth dy_hi Q16.48";
+    default sw = rw;
+    default hw = r;    
+    field {} val[32];
+  } ps1_dac_smooth_dy_hi @0x358;  
+
+reg {
+    desc="PS1 Smooth dy_lo Q16.48";
+    default sw = rw;
+    default hw = r;    
+    field {} val[32];
+  } ps1_dac_smooth_dy_lo @0x35C;  
+
+reg {
+    desc="PS1 DAC Smooth dyperpt_hi Q16.48";
+    default sw = rw;
+    default hw = r;    
+    field {} val[32];
+  } ps1_dac_smooth_dy_per_pt_hi @0x360;  
+
+reg {
+    desc="PS1 DAC Smooth dyperpt_lo Q16.48";
+    default sw = rw;
+    default hw = r;    
+    field {} val[32];
+  } ps1_dac_smooth_dy_per_pt_lo @0x364; 
+
+
 /**** Channel 2 *****/
 
 
@@ -1256,6 +1308,50 @@ reg {
     field {} val[32];
   } ps2_fofb_scalefactor @0x528;
 
+
+reg {
+    desc="PS2 DAC Smooth linear NumPts";
+    default sw = rw;
+    default hw = r;    
+    field {} val[32];
+  } ps2_dac_smooth_linear_len @0x550;  
+
+
+reg {
+    desc="PS2 DAC Smooth curved NumPts";
+    default sw = rw;
+    default hw = r;    
+    field {} val[32];
+  } ps2_dac_smooth_curved_len @0x554;  
+
+
+reg {
+    desc="PS2 Smooth dy_hi Q16.48";
+    default sw = rw;
+    default hw = r;    
+    field {} val[32];
+  } ps2_dac_smooth_dy_hi @0x558;  
+
+reg {
+    desc="PS2 Smooth dy_lo Q16.48";
+    default sw = rw;
+    default hw = r;    
+    field {} val[32];
+  } ps2_dac_smooth_dy_lo @0x55C;  
+
+reg {
+    desc="PS2 DAC Smooth dyperpt_hi Q16.48";
+    default sw = rw;
+    default hw = r;    
+    field {} val[32];
+  } ps2_dac_smooth_dy_per_pt_hi @0x560;  
+
+reg {
+    desc="PS2 DAC Smooth dyperpt_lo Q16.48";
+    default sw = rw;
+    default hw = r;    
+    field {} val[32];
+  } ps2_dac_smooth_dy_per_pt_lo @0x564; 
 
 
 
@@ -1781,6 +1877,51 @@ reg {
   } ps3_fofb_scalefactor @0x728;
 
 
+reg {
+    desc="PS3 DAC Smooth linear NumPts";
+    default sw = rw;
+    default hw = r;    
+    field {} val[32];
+  } ps3_dac_smooth_linear_len @0x750;  
+
+
+reg {
+    desc="PS3 DAC Smooth curved NumPts";
+    default sw = rw;
+    default hw = r;    
+    field {} val[32];
+  } ps3_dac_smooth_curved_len @0x754;  
+
+reg {
+    desc="PS3 Smooth dy_hi Q16.48";
+    default sw = rw;
+    default hw = r;    
+    field {} val[32];
+  } ps3_dac_smooth_dy_hi @0x758;  
+
+reg {
+    desc="PS3 Smooth dy_lo Q16.48";
+    default sw = rw;
+    default hw = r;    
+    field {} val[32];
+  } ps3_dac_smooth_dy_lo @0x75C;  
+
+reg {
+    desc="PS3 DAC Smooth dyperpt_hi Q16.48";
+    default sw = rw;
+    default hw = r;    
+    field {} val[32];
+  } ps3_dac_smooth_dy_per_pt_hi @0x760;  
+
+reg {
+    desc="PS3 DAC Smooth dyperpt_lo Q16.48";
+    default sw = rw;
+    default hw = r;    
+    field {} val[32];
+  } ps3_dac_smooth_dy_per_pt_lo @0x764; 
+
+
+
 
 /**** Channel 4 *****/
 
@@ -2303,6 +2444,52 @@ reg {
     field {} val[32];
   } ps4_fofb_scalefactor @0x928;
 
+
+
+reg {
+    desc="PS4 DAC Smooth linear NumPts";
+    default sw = rw;
+    default hw = r;    
+    field {} val[32];
+  } ps4_dac_smooth_linear_len @0x950;  
+
+
+reg {
+    desc="PS4 DAC Smooth curved NumPts";
+    default sw = rw;
+    default hw = r;    
+    field {} val[32];
+  } ps4_dac_smooth_curved_len @0x954;  
+
+
+
+reg {
+    desc="PS4 Smooth dy_hi Q16.48";
+    default sw = rw;
+    default hw = r;    
+    field {} val[32];
+  } ps4_dac_smooth_dy_hi @0x958;  
+
+reg {
+    desc="PS4 Smooth dy_lo Q16.48";
+    default sw = rw;
+    default hw = r;    
+    field {} val[32];
+  } ps4_dac_smooth_dy_lo @0x95C;  
+
+reg {
+    desc="PS4 DAC Smooth dyperpt_hi Q16.48";
+    default sw = rw;
+    default hw = r;    
+    field {} val[32];
+  } ps4_dac_smooth_dy_per_pt_hi @0x960;  
+
+reg {
+    desc="PS4 DAC Smooth dyperpt_lo Q16.48";
+    default sw = rw;
+    default hw = r;    
+    field {} val[32];
+  } ps4_dac_smooth_dy_per_pt_lo @0x964; 
 
 
 

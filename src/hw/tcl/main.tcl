@@ -43,7 +43,7 @@ proc setSources {} {
   lappend Sources {"../hdl/smooth_cosine_ramp.vhd" "VHDL 2008"} 
   lappend Sources {"../hdl/smooth_linear_ramp.vhd" "VHDL 2008"} 
   lappend Sources {"../hdl/ramptable_ramp.vhd" "VHDL 2008"}   
-  lappend Sources {"../hdl/smooth_ramp_tb.vhd" "VHDL 2008"}  
+  lappend Sources {"../hdl/smooth_linear_ramp_tb.vhd" "VHDL 2008"}  
   lappend Sources {"../hdl/cordic_sine_tb.vhd" "VHDL 2008"}
   
   
@@ -125,8 +125,8 @@ proc doOnCreate {} {
   set_property used_in_synthesis false [get_files ${::fwfwk::SrcPath}/hw/hdl/cordic_sine_tb.vhd] 
   set_property used_in_simulation true [get_files ${::fwfwk::SrcPath}/hw/hdl/cordic_sine_tb.vhd]  
   
-  set_property used_in_synthesis false [get_files ${::fwfwk::SrcPath}/hw/hdl/smooth_ramp_tb.vhd] 
-  set_property used_in_simulation true [get_files ${::fwfwk::SrcPath}/hw/hdl/smooth_ramp_tb.vhd] 
+  set_property used_in_synthesis false [get_files ${::fwfwk::SrcPath}/hw/hdl/smooth_linear_ramp_tb.vhd] 
+  set_property used_in_simulation true [get_files ${::fwfwk::SrcPath}/hw/hdl/smooth_linear_ramp_tb.vhd] 
   
   set_property used_in_synthesis false [get_files ${::fwfwk::SrcPath}/hw/hdl/fofb_top_tb.vhd] 
   set_property used_in_simulation true [get_files ${::fwfwk::SrcPath}/hw/hdl/fofb_top_tb.vhd] 

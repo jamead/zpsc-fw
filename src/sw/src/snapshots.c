@@ -328,6 +328,7 @@ s32 SendWfmData(char *msg, TriggerInfo *trig) {
     trig->active = 0;
 
 	ReadDMABuf(msg,trig);
+	trig->trigcnt++;
 
 	//hton_conv(msg,MSGWFMLEN);
 	//psc_send(the_server, trig->msgID, MSGWFMLEN, msg);
@@ -335,9 +336,11 @@ s32 SendWfmData(char *msg, TriggerInfo *trig) {
 	if ((trig->msgID == MSGINJCH1) || (trig->msgID == MSGINJCH2) ||
 		(trig->msgID == MSGINJCH3) || (trig->msgID == MSGINJCH4)) {
 		//xil_printf("Sending Inj Snapshot:  %d\r\n",trig->msgID);
-		//Inj Trigger only wants 8k points
-		hton_conv(msg,MSGWFMLEN/10);
-		psc_send(the_server, trig->msgID, MSGWFMLEN/10, msg);
+		//Inj Trigger only wants 1k points
+		hton_conv(msg,MSGINJWFMLEN);
+		//xil_printf("SendWfmData TrigNum: %d: Ch%d  Calling psc_send...",trig->trigcnt,(trig->msgID & 0x3)+1);
+		psc_send(the_server, trig->msgID, MSGINJWFMLEN, msg);
+		//xil_printf("    Done\r\n");
 	}
 	else {
 		//xil_printf("Sending Other Snapshot:  %d\r\n",trig->msgID);
@@ -502,6 +505,7 @@ void InitTriggerInfo(struct TriggerTypes * trig) {
       trig->inj[i].posttrigpts = 8000;
 	  trig->inj[i].channum = i+1;
 	  trig->inj[i].msgID = MSGINJCH1+i;
+	  trig->inj[i].trigcnt = 0;
 
 	  trig->evr[i].addr_last = trig->evr[i].addr = trig->evr[i].active = trig->evr[i].sendbuf = trig->evr[i].postdlycnt = 0;
       trig->evr[i].pretrigpts = trig->evr[i].posttrigpts = 50000;

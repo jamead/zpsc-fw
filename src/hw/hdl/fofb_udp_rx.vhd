@@ -40,10 +40,10 @@ architecture udp_rx_arch OF udp_rx is
      signal setpt               : std_logic_vector(31 downto 0);
      
      
-     attribute mark_debug : string;  
-     attribute mark_debug of framebytenum: signal is "true";
-     attribute mark_debug of state: signal is "true";  
-     attribute mark_debug of udp_pkt_buf_rx: signal is "true";
+--     attribute mark_debug : string;  
+--     attribute mark_debug of framebytenum: signal is "true";
+--     attribute mark_debug of state: signal is "true";  
+--     attribute mark_debug of udp_pkt_buf_rx: signal is "true";
      
      
 

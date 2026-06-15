@@ -94,6 +94,31 @@ u8 get_binary_input(void) {
 }
 
 
+static s32 get_percent_input(void)
+{
+    char buf[16];
+    int idx = 0;
+    char c;
+
+    while (1) {
+        c = inbyte();
+
+        if ((c == '\r') || (c == '\n')) {
+            buf[idx] = '\0';
+            xil_printf("\r\n");
+            return atoi(buf);
+        }
+
+        if ((c >= '0') && (c <= '9') && (idx < sizeof(buf) - 1)) {
+            buf[idx++] = c;
+            xil_printf("%c", c);
+        }
+    }
+}
+
+
+
+
 
 void dump_eeprom(void)
 {
@@ -195,6 +220,20 @@ void display_settings(void)
 		xil_printf("Main Dipole Mode is disabled\r\n");
 		}
 
+	  // Smooth Ramp Type
+	  val = rdBuf[6];
+
+	  if (val == 0) {
+		// Main Dipole Mode is enabled
+	 	//Xil_Out32(XPAR_M_AXI_BASEADDR + SMOOTHRAMP_TYPE_REG, 0);
+	    xil_printf("Smooth Ramp Type is Linear.  ");
+		val = rdBuf[7];
+		xil_printf("  Curved portion is %d%\r\n",val);
+	   }
+       else {
+		//Xil_Out32(XPAR_M_AXI_BASEADDR + SMOOTHRAMP_TYPE_REG, 1);
+		xil_printf("Smooth Ramp Type is Cosine\r\n");
+	   }
 
 
 
@@ -326,6 +365,52 @@ void set_maindipole(void)
 
 
 
+void set_smoothramptype(void)
+{
+  u8 val;
+  u8 percent_curved;
+
+  xil_printf("\r\nSet Smooth Ramp Type 0 = Linear, 1 = Cosine  ");
+
+  if ((val = get_binary_input()) != (u8)-1) {
+
+    xil_printf("\r\n");
+
+    i2c_eeprom_writeBytes(0x16, &val, 1);
+    vTaskDelay(pdMS_TO_TICKS(10));
+
+    if (val == 0) {
+      xil_printf("Enter percent curved amount, 5 to 50: ");
+      percent_curved = get_percent_input();
+      if ((percent_curved >= 5) && (percent_curved <= 50)) {
+        xil_printf("\r\nPercent curved set to %d\r\n", percent_curved);
+        i2c_eeprom_writeBytes(0x17, &percent_curved, 1);
+        vTaskDelay(pdMS_TO_TICKS(10));
+      }
+      else {
+        xil_printf("\r\nInvalid value. Percent curved must be between 5 and 40.\r\n");
+      }
+    }
+  }
+
+    ReadHardwareFlavor();
+}
+
+/*
+void set_smoothramptype(void)
+{
+  u8 val;
+
+  xil_printf("\r\nSet Smooth Ramp Type 0 = Linear, 1 = Cosine  ");
+  if ((val = get_binary_input()) != (u8)-1) {
+     xil_printf("\r\n");
+	 i2c_eeprom_writeBytes(0x16, &val, 1);
+     vTaskDelay(pdMS_TO_TICKS(10));
+  }
+  ReadHardwareFlavor();
+}
+*/
+
 /*
 void set_polarity(void)
 {
@@ -370,7 +455,6 @@ void set_polarity(void)
 
     ReadHardwareFlavor();
 }
-
 
 
 
@@ -572,7 +656,8 @@ void console_menu()
 	    {'J', "Dump EEPROM", dump_eeprom},
 		{'K', "Clear EEPROM", clear_eeprom},
 		{'L', "Test EEPROM", test_eeprom},
-	    {'M', "Dave Bergman Calibration Mode", receive_console_cmd}
+	    {'M', "Dave Bergman Calibration Mode", receive_console_cmd},
+		{'N', "Set Smooth Ramp Type (Linear, Cosine)", set_smoothramptype}
 	};
 	static const size_t menulen = sizeof(menu)/sizeof(menu_entry_t);
 

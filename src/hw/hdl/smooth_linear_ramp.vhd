@@ -12,8 +12,8 @@ entity smooth_linear_ramp is
     new_setpt     : in signed(19 downto 0);
     linear_len    : in std_logic_vector(31 downto 0);
     curved_len    : in std_logic_vector(31 downto 0);
-    dy            : in signed(31 downto 0);
-    dy_per_pt     : in signed(31 downto 0);
+    dy            : in signed(63 downto 0);
+    dy_per_pt     : in signed(63 downto 0);
     smooth_active : out std_logic;
     rampout       : out signed(19 downto 0)
   );
@@ -34,9 +34,9 @@ architecture behv of smooth_linear_ramp is
   signal last_point          : std_logic;
   signal new_setpt_prev      : signed(19 downto 0);
   signal old_setpt           : signed(19 downto 0);
-  signal dy0                 : signed(63 downto 0);
-  signal setpt_cur           : signed(63 downto 0);   -- Q10.22
-  signal setpt_last          : signed(63 downto 0);   -- Q10.22
+  signal dy0                 : signed(95 downto 0);
+  signal setpt_cur           : signed(95 downto 0);   -- Q10.22
+  signal setpt_last          : signed(95 downto 0);   -- Q10.22
   signal total_len           : signed(31 downto 0);
   
   signal mult_wait_cnt       : unsigned(3 downto 0);
@@ -49,11 +49,24 @@ architecture behv of smooth_linear_ramp is
    attribute mark_debug of tenkhz_trig: signal is "true";  
    attribute mark_debug of old_setpt: signal is "true";   
    attribute mark_debug of new_setpt: signal is "true";  
+   attribute mark_debug of setpt_cur: signal is "true";
+   attribute mark_debug of setpt_last: signal is "true";
+   attribute mark_debug of linear_len: signal is "true";
+   attribute mark_debug of curved_len: signal is "true";
+   attribute mark_debug of total_len: signal is "true";   
+   attribute mark_debug of dy: signal is "true";
+   attribute mark_debug of dy_per_pt: signal is "true";
+   attribute mark_debug of state: signal is "true";
+   attribute mark_debug of ramp_curved_active: signal is "true";
+   attribute mark_debug of ramp_linear_active: signal is "true";
+   attribute mark_debug of cnt: signal is "true";
+   attribute mark_debug of rampout: signal is "true";
+   
  
 
 begin
 
-rampout <= resize(shift_right(setpt_last, 22), rampout'length);
+rampout <= resize(shift_right(setpt_last, 48), rampout'length);
 
 process(clk)
   begin 
@@ -64,9 +77,9 @@ process(clk)
         last_point <= '0';
         smooth_active <= '0';
         new_setpt_prev <= (others => '0');
-        dy0 <= 64d"0";
-        setpt_cur <= 64d"0";
-        setpt_last <= 64d"0";
+        dy0 <= 96d"0";
+        setpt_cur <= 96d"0";
+        setpt_last <= 96d"0";
         ramp_curved_active <= '0';
         ramp_linear_active <= '0';
         --rampout <= 20d"0";
@@ -83,7 +96,8 @@ process(clk)
             -- run if dac setpt changes and dac_opmode is Smooth
             if (new_setpt_prev /= new_setpt) and (mode = "00")then
               -- load the setpt_last, which is in Q10.22 format with the signed(19 downto 0) current setpoint
-              setpt_last <= shift_left(resize(cur_setpt, 64), 22);
+              --Q8.24
+              setpt_last <= shift_left(resize(cur_setpt, 96), 48);
               state <= start_curved;
               cnt <= 32d"0";
               last_point <= '0';
@@ -104,7 +118,7 @@ process(clk)
             end if;
      
           when SC_CALC_DY0 =>
-            dy0 <= resize(cnt * dy_per_pt, 64);
+            dy0 <= resize(cnt * dy_per_pt, 96);
             mult_wait_cnt <= to_unsigned(10, mult_wait_cnt'length);
             state <= sc_wait_dy0_mult;  
            
@@ -161,7 +175,7 @@ process(clk)
             end if;
      
           when EC_CALC_DY0 =>
-            dy0 <= resize((total_len - cnt) * dy_per_pt, 64);
+            dy0 <= resize((total_len - cnt) * dy_per_pt, 96);
             mult_wait_cnt <= to_unsigned(10, mult_wait_cnt'length);
             state <= ec_wait_dy0_mult;  
            

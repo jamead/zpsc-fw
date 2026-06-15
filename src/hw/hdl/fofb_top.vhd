@@ -38,16 +38,16 @@ architecture behv of fofb_top is
   signal fofb_new              : std_logic;
 
 
-  attribute mark_debug : string;  
-  attribute mark_debug of fofb_params: signal is "true";
-  attribute mark_debug of fofb_stat: signal is "true"; 
-  attribute mark_debug of fofb_data: signal is "true";
-  attribute mark_debug of fofb_rx_dv: signal is "true";
-  attribute mark_debug of fofb_rxd: signal is "true";
-  attribute mark_debug of fofb_packet: signal is "true";
-  attribute mark_debug of udp_rx_done: signal is "true";
-  attribute mark_debug of fofb_rx_dv_dly: signal is "true";
-  attribute mark_debug of fofb_rxd_dly: signal is "true";
+--  attribute mark_debug : string;  
+--  attribute mark_debug of fofb_params: signal is "true";
+--  attribute mark_debug of fofb_stat: signal is "true"; 
+--  attribute mark_debug of fofb_data: signal is "true";
+--  attribute mark_debug of fofb_rx_dv: signal is "true";
+--  attribute mark_debug of fofb_rxd: signal is "true";
+--  attribute mark_debug of fofb_packet: signal is "true";
+--  attribute mark_debug of udp_rx_done: signal is "true";
+--  attribute mark_debug of fofb_rx_dv_dly: signal is "true";
+--  attribute mark_debug of fofb_rxd_dly: signal is "true";
 
 begin
 

@@ -75,11 +75,11 @@ architecture behv of ps_io is
   signal tenhz_datasend  : std_logic;
 
   
-  attribute mark_debug     : string;
-  attribute mark_debug of ch34_dualmode: signal is "true";
-  attribute mark_debug of usr_trig: signal is "true"; 
-  attribute mark_debug of flt_trig: signal is "true";
-  attribute mark_debug of ioc_access: signal is "true";
+--  attribute mark_debug     : string;
+--  attribute mark_debug of ch34_dualmode: signal is "true";
+--  attribute mark_debug of usr_trig: signal is "true"; 
+--  attribute mark_debug of flt_trig: signal is "true";
+--  attribute mark_debug of ioc_access: signal is "true";
   
   --attribute mark_debug of fault_params: signal is "true";
   --attribute mark_debug of dac_cntrl: signal is "true";
@@ -131,6 +131,8 @@ dig_cntrl.ps1.main_dipole <= reg_o.main_dipole.val.data(0);
 dig_cntrl.ps2.main_dipole <= reg_o.main_dipole.val.data(0);
 dig_cntrl.ps3.main_dipole <= reg_o.main_dipole.val.data(0);
 dig_cntrl.ps4.main_dipole <= reg_o.main_dipole.val.data(0);
+
+dac_cntrl.smoothramp_type <= reg_o.smoothramp_type.val.data(0);
 
 
 fofb_params.ipaddr <= reg_o.fofb_ipaddr.val.data;
@@ -198,7 +200,14 @@ reg_i.ps1_dac_rampactive.val.data(0) <= dac_stat.ps1.active;
 reg_i.ps1_dac_currsetpt.val.data <= std_logic_vector(resize(signed(dac_stat.ps1.dac_setpt),32));
 
 dac_cntrl.ps1.smooth_phaseinc <= signed(reg_o.ps1_dac_smooth_phaseinc.val.data);
-
+dac_cntrl.ps1.linear_len <= reg_o.ps1_dac_smooth_linear_len.val.data;
+dac_cntrl.ps1.curved_len <= reg_o.ps1_dac_smooth_curved_len.val.data;
+dac_cntrl.ps1.dy_hi <= reg_o.ps1_dac_smooth_dy_hi.val.data;
+dac_cntrl.ps1.dy_lo <= reg_o.ps1_dac_smooth_dy_lo.val.data;
+dac_cntrl.ps1.dy_q16_48 <= signed(dac_cntrl.ps1.dy_hi & dac_cntrl.ps1.dy_lo);
+dac_cntrl.ps1.dy_per_pt_hi <= reg_o.ps1_dac_smooth_dy_per_pt_hi.val.data;
+dac_cntrl.ps1.dy_per_pt_lo <= reg_o.ps1_dac_smooth_dy_per_pt_lo.val.data;
+dac_cntrl.ps1.dy_per_pt_q16_48 <= signed(dac_cntrl.ps1.dy_per_pt_hi & dac_cntrl.ps1.dy_per_pt_lo);
 
 -- Digital Outputs
 dig_cntrl.ps1.on1 <= reg_o.ps1_digout_on1.val.data(0);
@@ -296,6 +305,14 @@ reg_i.ps2_dac_rampactive.val.data(0) <= dac_stat.ps2.active;
 reg_i.ps2_dac_currsetpt.val.data <= std_logic_vector(resize(signed(dac_stat.ps2.dac_setpt),32));
 
 dac_cntrl.ps2.smooth_phaseinc <= signed(reg_o.ps2_dac_smooth_phaseinc.val.data);
+dac_cntrl.ps2.linear_len <= reg_o.ps2_dac_smooth_linear_len.val.data;
+dac_cntrl.ps2.curved_len <= reg_o.ps2_dac_smooth_curved_len.val.data;
+dac_cntrl.ps2.dy_hi <= reg_o.ps2_dac_smooth_dy_hi.val.data;
+dac_cntrl.ps2.dy_lo <= reg_o.ps2_dac_smooth_dy_lo.val.data;
+dac_cntrl.ps2.dy_q16_48 <= signed(dac_cntrl.ps2.dy_hi & dac_cntrl.ps2.dy_lo);
+dac_cntrl.ps2.dy_per_pt_hi <= reg_o.ps2_dac_smooth_dy_per_pt_hi.val.data;
+dac_cntrl.ps2.dy_per_pt_lo <= reg_o.ps2_dac_smooth_dy_per_pt_lo.val.data;
+dac_cntrl.ps2.dy_per_pt_q16_48 <= signed(dac_cntrl.ps2.dy_per_pt_hi & dac_cntrl.ps1.dy_per_pt_lo);
 
 
 -- Digital Outputs
@@ -393,6 +410,14 @@ reg_i.ps3_dac_rampactive.val.data(0) <= dac_stat.ps3.active;
 reg_i.ps3_dac_currsetpt.val.data <= std_logic_vector(resize(signed(dac_stat.ps3.dac_setpt),32));
 
 dac_cntrl.ps3.smooth_phaseinc <= signed(reg_o.ps3_dac_smooth_phaseinc.val.data);
+dac_cntrl.ps3.linear_len <= reg_o.ps3_dac_smooth_linear_len.val.data;
+dac_cntrl.ps3.curved_len <= reg_o.ps3_dac_smooth_curved_len.val.data;
+dac_cntrl.ps3.dy_hi <= reg_o.ps3_dac_smooth_dy_hi.val.data;
+dac_cntrl.ps3.dy_lo <= reg_o.ps3_dac_smooth_dy_lo.val.data;
+dac_cntrl.ps3.dy_q16_48 <= signed(dac_cntrl.ps3.dy_hi & dac_cntrl.ps3.dy_lo);
+dac_cntrl.ps3.dy_per_pt_hi <= reg_o.ps3_dac_smooth_dy_per_pt_hi.val.data;
+dac_cntrl.ps3.dy_per_pt_lo <= reg_o.ps3_dac_smooth_dy_per_pt_lo.val.data;
+dac_cntrl.ps3.dy_per_pt_q16_48 <= signed(dac_cntrl.ps3.dy_per_pt_hi & dac_cntrl.ps3.dy_per_pt_lo);
 
 -- Digital Outputs
 dig_cntrl.ps3.on1 <= reg_o.ps3_digout_on1.val.data(0);
@@ -491,6 +516,14 @@ reg_i.ps4_dac_rampactive.val.data(0) <= dac_stat.ps4.active;
 reg_i.ps4_dac_currsetpt.val.data <= std_logic_vector(resize(signed(dac_stat.ps4.dac_setpt),32));
 
 dac_cntrl.ps4.smooth_phaseinc <= signed(reg_o.ps4_dac_smooth_phaseinc.val.data);
+dac_cntrl.ps4.linear_len <= reg_o.ps4_dac_smooth_linear_len.val.data;
+dac_cntrl.ps4.curved_len <= reg_o.ps4_dac_smooth_curved_len.val.data;
+dac_cntrl.ps4.dy_hi <= reg_o.ps4_dac_smooth_dy_hi.val.data;
+dac_cntrl.ps4.dy_lo <= reg_o.ps4_dac_smooth_dy_lo.val.data;
+dac_cntrl.ps4.dy_q16_48 <= signed(dac_cntrl.ps4.dy_hi & dac_cntrl.ps4.dy_lo);
+dac_cntrl.ps4.dy_per_pt_hi <= reg_o.ps4_dac_smooth_dy_per_pt_hi.val.data;
+dac_cntrl.ps4.dy_per_pt_lo <= reg_o.ps4_dac_smooth_dy_per_pt_lo.val.data;
+dac_cntrl.ps4.dy_per_pt_q16_48 <= signed(dac_cntrl.ps4.dy_per_pt_hi & dac_cntrl.ps4.dy_per_pt_lo);
 
 
 -- Digital Outputs

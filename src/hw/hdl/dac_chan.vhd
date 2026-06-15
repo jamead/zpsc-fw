@@ -29,6 +29,7 @@ entity dac_chan is
     dig_cntrl            : in t_dig_cntrl_onech;
     fofb_dac_setpt       : in signed(19 downto 0);
     dac_numbits_sel      : in std_logic;
+    smoothramp_type      : in std_logic;
     dac_cntrl            : in t_dac_cntrl_onech;
     dac_stat             : out t_dac_stat_onech;
     n_sync1234		     : out std_logic; 
@@ -44,46 +45,46 @@ type state_type is (IDLE, RUN_RAMP, UPDATE_DAC);
 
 
  
-  signal dac_data         : std_logic_vector(19 downto 0);
-  signal dac_rdaddr       : std_logic_vector(15 downto 0);
-  signal dac_rddata       : std_logic_vector(19 downto 0);
-  signal dac_rden         : std_logic;
-  signal ramp_dac_setpt   : signed(19 downto 0);
-  signal smooth_dac_setpt : signed(19 downto 0);
-  --signal fofb_dac_setpt   : signed(19 downto 0);
-  signal dac_setpt_raw    : signed(19 downto 0);
-  signal dac_setpt        : signed(19 downto 0);
-  signal dac_setpt_wlim   : signed(19 downto 0);
-  signal ramp_active      : std_logic;
-  signal smooth_active    : std_logic;
-  signal dac_trig         : std_logic;
-  signal gainoff_done     : std_logic;
+  signal dac_data                : std_logic_vector(19 downto 0);
+  signal dac_rdaddr              : std_logic_vector(15 downto 0);
+  signal dac_rddata              : std_logic_vector(19 downto 0);
+  signal dac_rden                : std_logic;
+  signal ramp_dac_setpt          : signed(19 downto 0);
+  signal smooth_dac_setpt        : signed(19 downto 0);
+  signal smooth_linear_dac_setpt : signed(19 downto 0);
+  signal smooth_cosine_dac_setpt : signed(19 downto 0);  
+  signal dac_setpt_raw           : signed(19 downto 0);
+  signal dac_setpt               : signed(19 downto 0);
+  signal dac_setpt_wlim          : signed(19 downto 0);
+  signal ramp_active             : std_logic;
+  signal smooth_cosine_active    : std_logic;
+  signal smooth_linear_active    : std_logic;
+  signal dac_trig                : std_logic;
+  signal gainoff_done            : std_logic;
   
   signal state : state_type;
 
 
 
    --debug signals (connect to ila)
---   attribute mark_debug                 : string;
---   attribute mark_debug of dac_data: signal is "true";
---   attribute mark_debug of ramp_dac_setpt: signal is "true";
---   attribute mark_debug of smooth_dac_setpt: signal is "true";
---   attribute mark_debug of dac_setpt_raw: signal is "true";   
---   attribute mark_debug of dac_setpt: signal is "true";
---   attribute mark_debug of dac_setpt_wlim: signal is "true";
---   attribute mark_debug of ramp_active: signal is "true";  
---   attribute mark_debug of smooth_active: signal is "true";  
---   attribute mark_debug of fofb_dac_setpt: signal is "true"; 
---   attribute mark_debug of dac_cntrl: signal is "true";
+   attribute mark_debug                 : string;
+   attribute mark_debug of dac_data: signal is "true";
+   attribute mark_debug of ramp_dac_setpt: signal is "true";
+   attribute mark_debug of smooth_linear_dac_setpt: signal is "true";
+   attribute mark_debug of dac_setpt_raw: signal is "true";   
+   attribute mark_debug of dac_setpt: signal is "true";
+   attribute mark_debug of dac_setpt_wlim: signal is "true";
+   attribute mark_debug of ramp_active: signal is "true";  
+   attribute mark_debug of smooth_linear_active: signal is "true";  
+   attribute mark_debug of fofb_dac_setpt: signal is "true"; 
+   attribute mark_debug of dac_cntrl: signal is "true";
 
 
 begin
 
 --status readbacks
 dac_stat.dac_setpt <= signed(dac_data); --dac_setpt;
-dac_stat.active <= ramp_active or smooth_active;
-
-
+dac_stat.active <= ramp_active or smooth_cosine_active or smooth_linear_active;
 
 
 --Source of DAC data depenods on Mode
@@ -127,8 +128,13 @@ rampmode: entity work.ramptable_ramp
     );
 
 
--- In smoothmode, DAC setpoint comes from raised cosine calculation done in fabric
-smoothmode: entity work.smooth_cosine_ramp
+
+--select which smooth ramptype (linear or cosine)
+smooth_dac_setpt <= smooth_linear_dac_setpt when smoothramp_type = '0' else smooth_cosine_dac_setpt;
+
+
+-- In smooth cosine mode, DAC setpoint comes from raised cosine calculation done in fabric
+smooth_cosine_mode: entity work.smooth_cosine_ramp
   port map (
     clk => clk,
     reset => reset,
@@ -137,10 +143,29 @@ smoothmode: entity work.smooth_cosine_ramp
     cur_setpt => dac_setpt, 
     new_setpt => dac_cntrl.setpoint, 
     phase_inc => dac_cntrl.smooth_phaseinc, 
-    smooth_active => smooth_active,
-    rampout => smooth_dac_setpt
+    smooth_active => smooth_cosine_active,
+    rampout => smooth_cosine_dac_setpt
 );
  
+ 
+-- In smooth linear mode, DAC setpoint comes from a edge smoothed linear calculation done in fabric
+smooth_linear_mode: entity work.smooth_linear_ramp
+  port map (
+    clk => clk,
+    reset => reset,
+    tenkhz_trig => tenkhz_trig,
+    mode => dac_cntrl.mode,
+    cur_setpt => dac_setpt, 
+    new_setpt => dac_cntrl.setpoint, 
+    linear_len => dac_cntrl.linear_len,
+    curved_len => dac_cntrl.curved_len,
+    dy => dac_cntrl.dy_q16_48,
+    dy_per_pt => dac_cntrl.dy_per_pt_q16_48,
+    smooth_active => smooth_linear_active,
+    rampout => smooth_linear_dac_setpt
+);  
+  
+  
   
   
  

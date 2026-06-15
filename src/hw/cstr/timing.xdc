@@ -43,3 +43,5 @@ set_clock_groups -name plclk_fofbclk2 -asynchronous -group [get_clocks clk_fpga_
 
 
 
+
+

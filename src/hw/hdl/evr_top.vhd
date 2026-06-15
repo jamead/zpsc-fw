@@ -72,34 +72,34 @@ architecture behv of evr_top is
 
 
    --debug signals (connect to ila)
-   attribute mark_debug     : string;
-   attribute mark_debug of eventstream: signal is "true";
-   attribute mark_debug of datastream: signal is "true";
-   attribute mark_debug of evr_trigs: signal is "true";
-   attribute mark_debug of evr_params: signal is "true";
-   attribute mark_debug of onehz_trig: signal is "true";
-   attribute mark_debug of onehz_trig_sync: signal is "true";   
+--   attribute mark_debug     : string;
+--   attribute mark_debug of eventstream: signal is "true";
+--   attribute mark_debug of datastream: signal is "true";
+--   attribute mark_debug of evr_trigs: signal is "true";
+--   attribute mark_debug of evr_params: signal is "true";
+--   attribute mark_debug of onehz_trig: signal is "true";
+--   attribute mark_debug of onehz_trig_sync: signal is "true";   
    
-   attribute mark_debug of onehz_rate_cnt: signal is "true";
-   attribute mark_debug of evr_trigs: signal is "true";
-   attribute mark_debug of evr_params: signal is "true";  
+--   attribute mark_debug of onehz_rate_cnt: signal is "true";
+--   attribute mark_debug of evr_trigs: signal is "true";
+--   attribute mark_debug of evr_params: signal is "true";  
    
---   attribute mark_debug of inj_trig: signal is "true";
---   attribute mark_debug of inj_trig_sync: signal is "true";
+----   attribute mark_debug of inj_trig: signal is "true";
+----   attribute mark_debug of inj_trig_sync: signal is "true";
    
---   attribute mark_debug of timestamp: signal is "true";
-----   attribute mark_debug of eventclock: signal is "true";
-----   attribute mark_debug of prev_datastream: signal is "true";
+----   attribute mark_debug of timestamp: signal is "true";
+------   attribute mark_debug of eventclock: signal is "true";
+------   attribute mark_debug of prev_datastream: signal is "true";
 
-   attribute mark_debug of rxdata: signal is "true";
-   attribute mark_debug of rxcharisk: signal is "true";
---   --attribute mark_debug of gtx_reset: signal is "true";
+--   attribute mark_debug of rxdata: signal is "true";
+--   attribute mark_debug of rxcharisk: signal is "true";
+----   --attribute mark_debug of gtx_reset: signal is "true";
    
---   attribute mark_debug of rxresetdone: signal is "true"; 
---   attribute mark_debug of tx_fsm_reset_done: signal is "true"; 
---   attribute mark_debug of rx_fsm_reset_done: signal is "true"; 
---   attribute mark_debug of cplllock: signal is "true";          
---   attribute mark_debug of cpllfbcklost: signal is "true"; 
+----   attribute mark_debug of rxresetdone: signal is "true"; 
+----   attribute mark_debug of tx_fsm_reset_done: signal is "true"; 
+----   attribute mark_debug of rx_fsm_reset_done: signal is "true"; 
+----   attribute mark_debug of cplllock: signal is "true";          
+----   attribute mark_debug of cpllfbcklost: signal is "true"; 
 
    
 

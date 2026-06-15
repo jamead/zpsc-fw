@@ -62,23 +62,23 @@ component cordic_sine
   
 
    --debug signals (connect to ila)
-   attribute mark_debug: string;   
-   attribute mark_debug of cur_setpt: signal is "true";
-   attribute mark_debug of tenkhz_trig: signal is "true";  
-   attribute mark_debug of old_setpt: signal is "true";   
-   attribute mark_debug of new_setpt: signal is "true";  
-   attribute mark_debug of phase_inc: signal is "true";   
-   attribute mark_debug of cos: signal is "true";
-   attribute mark_debug of phase: signal is "true";             
-   attribute mark_debug of state: signal is "true";   
-   attribute mark_debug of last_point: signal is "true";  
-   attribute mark_debug of cnt: signal is "true";    
-   attribute mark_debug of raised_cos: signal is "true";  
-   attribute mark_debug of new_setpt_lat: signal is "true";   
-   attribute mark_debug of diff_setpt: signal is "true";  
-   attribute mark_debug of rampout_wdiff: signal is "true";  
-   attribute mark_debug of rampout_fp: signal is "true";    
-   attribute mark_debug of rampout: signal is "true";  
+--   attribute mark_debug: string;   
+--   attribute mark_debug of cur_setpt: signal is "true";
+--   attribute mark_debug of tenkhz_trig: signal is "true";  
+--   attribute mark_debug of old_setpt: signal is "true";   
+--   attribute mark_debug of new_setpt: signal is "true";  
+--   attribute mark_debug of phase_inc: signal is "true";   
+--   attribute mark_debug of cos: signal is "true";
+--   attribute mark_debug of phase: signal is "true";             
+--   attribute mark_debug of state: signal is "true";   
+--   attribute mark_debug of last_point: signal is "true";  
+--   attribute mark_debug of cnt: signal is "true";    
+--   attribute mark_debug of raised_cos: signal is "true";  
+--   attribute mark_debug of new_setpt_lat: signal is "true";   
+--   attribute mark_debug of diff_setpt: signal is "true";  
+--   attribute mark_debug of rampout_wdiff: signal is "true";  
+--   attribute mark_debug of rampout_fp: signal is "true";    
+--   attribute mark_debug of rampout: signal is "true";  
 
 begin
 

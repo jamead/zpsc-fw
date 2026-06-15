@@ -29,6 +29,7 @@
 #define FOFB_NONCE_REG           0x6C     // Readback of NONCE Register in FOFB packet
 #define CH34_DUALMODE_REG        0x70     // Links Ch3 and Ch4 on and fault registers for Series Connected Supplies
 #define MAIN_DIPOLE_MODE_REG     0x74     // Selects if the Power Supply connected is Main Dipole
+#define SMOOTHRAMP_TYPE_REG      0x78     // Selects the type of smooth ramp (0=linear, 1=cosine)
 
 // channel registers
 #define DCCT1_REG                0X00     // DCCT 0
@@ -102,6 +103,12 @@
 #define FOFB_DACSETPT_REG        0x124     // Read back of Set Point received from FOFB link
 #define FOFB_SCALEFACTOR_REG     0x128     // Scalefactor to convert FOFB Float Input to DAC Bits
 
+#define SMOOTH_LINEAR_LEN_REG    0x150     // Number of Points for Linear portion of Smooth Ramp
+#define SMOOTH_CURVED_LEN_REG    0x154     // Number of Points for Curved portion of Smooth Ramp
+#define SMOOTH_DY_HI_REG         0x158     // Delta Y (in bits) for Linear portion (Q10.22 format)
+#define SMOOTH_DY_LO_REG         0x15C     // Delta Y (in bits) for Linear portion (Q10.22 format)
+#define SMOOTH_DY_PER_PT_HI_REG  0x160     // Delta Y (in bits) for Curved portion (Q10.22 format)
+#define SMOOTH_DY_PER_PT_LO_REG  0x164     // Delta Y (in bits) for Curved portion (Q10.22 format)
 
 
 #define SNAPSHOT_ADDRPTR         0xA00     // Snapshot 20 sec circular buffer current address pointer

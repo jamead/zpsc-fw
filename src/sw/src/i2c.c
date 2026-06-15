@@ -16,6 +16,9 @@ extern XIicPs IicPsInstance1;			/* Instance of the IIC Device */
 extern float CONVVOLTSTODACBITS;
 extern float CONVDACBITSTOVOLTS;
 
+u8 smoothramp_type;
+u8 smoothramp_percentcurved;
+
 #define IIC0_DEVICE_ID    XPAR_XIICPS_0_DEVICE_ID
 #define IIC1_DEVICE_ID    XPAR_XIICPS_1_DEVICE_ID
 
@@ -322,7 +325,25 @@ void ReadHardwareFlavor(void)  {
 	    xil_printf("Main Dipole Mode is disabled\r\n");
 	}
 
+	// Smooth Ramp Type
+    val = rdBuf[6];
 
+	if (val == 0) {
+		// Smooth Ramp Type (Linear or Cosine)
+ 		Xil_Out32(XPAR_M_AXI_BASEADDR + SMOOTHRAMP_TYPE_REG, 0);
+        xil_printf("Smooth Ramp Type is Linear.  ");
+	    val = rdBuf[7];
+	    xil_printf("  Curved portion is %d%\r\n",val);
+	    smoothramp_type = 0;
+	    smoothramp_percentcurved = val;
+	}
+
+	else {
+		Xil_Out32(XPAR_M_AXI_BASEADDR + SMOOTHRAMP_TYPE_REG, 1);
+	    xil_printf("Smooth Ramp Type is Cosine\r\n");
+	    smoothramp_type = 1;
+	    smoothramp_percentcurved = 0;
+	}
 
 
     xil_printf("\r\n\r\n");

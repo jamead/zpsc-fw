@@ -77,23 +77,23 @@ architecture arch of fault_block is
 
 
   --debug signals (connect to ila)
-   attribute mark_debug                 : string;
---   attribute mark_debug of fault_params: signal is "true";
-   attribute mark_debug of clear_pulse: signal is "true";
-   attribute mark_debug of re: signal is "true";
-   attribute mark_debug of re_reg: signal is "true";
-     attribute mark_debug of fault_live: signal is "true";
-     attribute mark_debug of fault_reg: signal is "true";
-     attribute mark_debug of fault_reg_lat: signal is "true";
-     attribute mark_debug of fault_params: signal is "true";
-     attribute mark_debug of fault_stat: signal is "true";
---     attribute mark_debug of dac_change_flag: signal is "true";
---     attribute mark_debug of dig_cntrl: signal is "true";
+--   attribute mark_debug                 : string;
+----   attribute mark_debug of fault_params: signal is "true";
+--   attribute mark_debug of clear_pulse: signal is "true";
+--   attribute mark_debug of re: signal is "true";
+--   attribute mark_debug of re_reg: signal is "true";
+--     attribute mark_debug of fault_live: signal is "true";
+--     attribute mark_debug of fault_reg: signal is "true";
+--     attribute mark_debug of fault_reg_lat: signal is "true";
+--     attribute mark_debug of fault_params: signal is "true";
+--     attribute mark_debug of fault_stat: signal is "true";
+----     attribute mark_debug of dac_change_flag: signal is "true";
+----     attribute mark_debug of dig_cntrl: signal is "true";
      
---    attribute mark_debug of startup_state: signal is "true";
---    attribute mark_debug of run_state: signal is "true";
-----   attribute mark_debug of fault_reg_lat_mask: signal is "true";
-----   attribute mark_debug of error_reg_mask: signal is "true";
+----    attribute mark_debug of startup_state: signal is "true";
+----    attribute mark_debug of run_state: signal is "true";
+------   attribute mark_debug of fault_reg_lat_mask: signal is "true";
+------   attribute mark_debug of error_reg_mask: signal is "true";
 
 
 begin 

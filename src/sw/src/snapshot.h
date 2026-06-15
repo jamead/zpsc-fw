@@ -32,7 +32,8 @@
 #define MSGEVRCH3 102
 #define MSGEVRCH4 103
 
-#define MSGWFMLEN 4000000   //in bytes
+#define MSGWFMLEN 4000000   //in bytes 100kpts * 10 waveforms * 4bytes/pt
+#define MSGINJWFMLEN 40000  //in bytes 1kpts * 10 waveforms * 4bytes/pt
 //#define MSGWFMLEN 1000000
 
 typedef struct SnapTrigData {
@@ -64,6 +65,7 @@ typedef struct TriggerInfo {
 	u32 sendbuf;
 	u32 msgID;
 	u32 channum;
+	u32 trigcnt;
 } TriggerInfo;
 
 typedef struct TriggerTypes {

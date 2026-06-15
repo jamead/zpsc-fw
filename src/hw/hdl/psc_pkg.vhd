@@ -263,6 +263,14 @@ type t_dac_cntrl_onech is record
   gain                : signed(23 downto 0);  --Q3.20 format
   offset              : signed(19 downto 0);
   smooth_phaseinc     : signed(31 downto 0);
+  linear_len          : std_logic_vector(31 downto 0);
+  curved_len          : std_logic_vector(31 downto 0);
+  dy_hi               : std_logic_vector(31 downto 0);
+  dy_lo               : std_logic_vector(31 downto 0);
+  dy_q16_48           : signed(63 downto 0);
+  dy_per_pt_hi        : std_logic_vector(31 downto 0);
+  dy_per_pt_lo        : std_logic_vector(31 downto 0);
+  dy_per_pt_q16_48    : signed(63 downto 0);
   --Control Register Bits 
   cntrl               : std_logic_vector(7 downto 0); 
   -- DPRAM for table
@@ -276,12 +284,13 @@ type t_dac_cntrl_onech is record
 end record; 
 
 type t_dac_cntrl is record
-  numbits_sel  : std_logic;   --0=18 bits, 1=20bits 
-  numchan_sel  : std_logic;   --0=2channel, 1=4channel
-  ps1           : t_dac_cntrl_onech;
-  ps2           : t_dac_cntrl_onech;
-  ps3           : t_dac_cntrl_onech;
-  ps4           : t_dac_cntrl_onech;
+  numbits_sel     : std_logic;   --0=18 bits, 1=20bits 
+  numchan_sel     : std_logic;   --0=2channel, 1=4channel
+  smoothramp_type : std_logic;   --0=linear, 1=cosine
+  ps1             : t_dac_cntrl_onech;
+  ps2             : t_dac_cntrl_onech;
+  ps3             : t_dac_cntrl_onech;
+  ps4             : t_dac_cntrl_onech;
 end record;
 
 
