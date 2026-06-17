@@ -30,7 +30,7 @@ architecture rtl of axi4_write_adc is
 
    constant BURST_LEN : integer := 40;
    constant DDR_BASE_ADDR   : std_logic_vector(31 downto 0) := x"1000_0000";
-   constant DDR_MAX_ADDR    : std_logic_vector(31 downto 0) := x"11E8_4800";  --10KHz * 40beats*4bytes/beat * 20 sec 
+   constant DDR_MAX_ADDR    : std_logic_vector(31 downto 0) := x"11E8_4760";  --10KHz * 40beats*4bytes/beat * 20 sec 
    
    type  state_type is (IDLE, ADDRESS, HDR, CNT, 
                         PS1_DCCT1, PS1_DCCT2, PS1_MON1, PS1_MON2, PS1_MON3, PS1_MON4, PS1_MON5, PS1_MON6, 
@@ -50,18 +50,19 @@ architecture rtl of axi4_write_adc is
     signal ps2_digbits : std_logic_vector(31 downto 0);
     signal ps3_digbits : std_logic_vector(31 downto 0);
     signal ps4_digbits : std_logic_vector(31 downto 0);
+    signal debug_trig  : std_logic;
     
     --debug signals (connect to ila)
---    attribute mark_debug                 : string;
---    attribute mark_debug of trigger : signal is "true";
---    attribute mark_debug of prev_trigger : signal is "true";   
---    attribute mark_debug of s_axi4_m2s: signal is "true";
---    attribute mark_debug of s_axi4_s2m: signal is "true";   
---    attribute mark_debug of wordnum : signal is "true"; 
---    attribute mark_debug of datacnt : signal is "true";  
---    attribute mark_debug of state : signal is "true"; 
-  
-  
+    attribute mark_debug                 : string;
+    attribute mark_debug of trigger : signal is "true";
+    attribute mark_debug of prev_trigger : signal is "true";   
+    attribute mark_debug of s_axi4_m2s: signal is "true";
+    attribute mark_debug of s_axi4_s2m: signal is "true";   
+    attribute mark_debug of wordnum : signal is "true"; 
+    attribute mark_debug of datacnt : signal is "true";  
+    attribute mark_debug of state : signal is "true"; 
+    attribute mark_debug of debug_trig: signal is "true";
+    attribute mark_debug of addr_base: signal is "true";  
   
   
   
@@ -124,9 +125,12 @@ process(clk)
           when IDLE =>                
             prev_trigger <= trigger;
             if (trigger = '1' and prev_trigger = '0') then
+              if (datacnt = 32d"199998") or (datacnt = 32d"199999") or (datacnt = 32d"200000") or (datacnt = 32d"0") or (datacnt = 32d"1") then
+                 debug_trig <= '1';
+              end if;
               ss_buf_stat.addr_ptr <= addr_base;
               ss_buf_stat.tenkhzcnt <= datacnt;
-              datacnt <= std_logic_vector(unsigned(datacnt) + 1);             
+              --datacnt <= std_logic_vector(unsigned(datacnt) + 1);             
               wordnum <= 0;
               s_axi4_m2s.awaddr <= addr_base;
               s_axi4_m2s.awvalid <= '1';
@@ -141,6 +145,7 @@ process(clk)
             end if;
 
           when ADDRESS =>
+             debug_trig <= '0';
              -- Address handshake
              if (s_axi4_s2m.awready = '1') then
                  s_axi4_m2s.awvalid <= '0';  -- Address accepted
@@ -211,11 +216,14 @@ process(clk)
               -- Clear bready after response
               if s_axi4_s2m.bvalid = '1' then
                 if (addr_base < DDR_MAX_ADDR) then
+                   datacnt <= std_logic_vector(unsigned(datacnt) + 1);
                    addr_base <= std_logic_vector(unsigned(addr_base) + 4*BURST_LEN);
                 else
+                   datacnt <= (others => '0');
                    addr_base <= DDR_BASE_ADDR;
                 end if;
                 s_axi4_m2s.bready <= '0';
+
                 state <= idle;
               end if;
               

@@ -74,10 +74,12 @@ signal ADC_8CH_ADC3     : std_logic_vector(127 downto 0);
 signal conv_done        : std_logic;
 signal done_pipe        : std_logic;
 signal mon_adcs_in      : t_mon_adcs;
+signal count            : signed(15 downto 0);
 
 
    --debug signals (connect to ila)
---   attribute mark_debug                 : string;
+   attribute mark_debug                 : string;
+   attribute mark_debug of count: signal is "true";
 --   attribute mark_debug of ADC8C_CONV123: signal is "true";
 --   attribute mark_debug of ADC8C_FS123: signal is "true";
 --   attribute mark_debug of ADC8C_SCK123: signal is "true";
@@ -91,6 +93,18 @@ signal mon_adcs_in      : t_mon_adcs;
 begin
 
 
+process(clk)
+begin 
+  if rising_edge(clk) then
+    if (reset = '1') then
+      count <= 16d"0";
+    else
+      if (start = '1') then
+        count <= count + 1;
+      end if;
+    end if;
+  end if;
+end process;
 
 
 

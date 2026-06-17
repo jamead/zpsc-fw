@@ -324,11 +324,17 @@ void ReadDMABuf(char *msg, TriggerInfo *trig) {
 static
 s32 SendWfmData(char *msg, TriggerInfo *trig) {
 
+    u32 i;
+	float *wfm = (float *)msg;
+
     trig->sendbuf = 0;
     trig->active = 0;
 
 	ReadDMABuf(msg,trig);
 	trig->trigcnt++;
+
+	for (i=0;i<200;i++)
+	  printf("MSG %d :   %f\r\n", i, wfm[i]);
 
 	//hton_conv(msg,MSGWFMLEN);
 	//psc_send(the_server, trig->msgID, MSGWFMLEN, msg);
