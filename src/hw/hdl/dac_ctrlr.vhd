@@ -41,9 +41,9 @@ architecture arch of dac_ctrlr is
    signal rampout       : signed(19 downto 0);
 
    --debug signals (connect to ila)
-   attribute mark_debug: string;   
-   attribute mark_debug of tenkhz_trig: signal is "true";
-   attribute mark_debug of rampout: signal is "true";
+   --attribute mark_debug: string;   
+   --attribute mark_debug of tenkhz_trig: signal is "true";
+   --attribute mark_debug of rampout: signal is "true";
 
 
 

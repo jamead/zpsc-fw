@@ -78,8 +78,8 @@ signal count            : signed(15 downto 0);
 
 
    --debug signals (connect to ila)
-   attribute mark_debug                 : string;
-   attribute mark_debug of count: signal is "true";
+   --attribute mark_debug                 : string;
+   --attribute mark_debug of count: signal is "true";
 --   attribute mark_debug of ADC8C_CONV123: signal is "true";
 --   attribute mark_debug of ADC8C_FS123: signal is "true";
 --   attribute mark_debug of ADC8C_SCK123: signal is "true";

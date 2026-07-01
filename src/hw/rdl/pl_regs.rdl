@@ -223,6 +223,22 @@ reg {
   } smoothramp_type @0x78; 
 
 
+reg {
+    desc="Live Time (seconds)";
+    default sw = rw;
+    default hw = w; 
+    field {} val[32];
+  } live_time_sec @0x80;  
+
+reg {
+    desc="Live Time (10 Hz)";
+    default sw = rw;
+    default hw = w; 
+    field {} val[32];
+  } live_tenhz_count @0x84;  
+
+
+
 /**** Channel 1 ****/
 
 /* 10Hz Data */

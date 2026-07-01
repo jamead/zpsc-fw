@@ -33,14 +33,14 @@ architecture behv of fofb_flt2fix is
   signal mult_valid        : std_logic;
   signal data_rdy          : std_logic;
 
-  attribute mark_debug : string;  
-  attribute mark_debug of fofb_new: signal is "true";
-  attribute mark_debug of mult_valid: signal is "true";
-  attribute mark_debug of fofb_valid: signal is "true"; 
-  attribute mark_debug of setpt_scaled: signal is "true";
-  attribute mark_debug of setptout_fp: signal is "true";
-  attribute mark_debug of fofb_setpt: signal is "true";
-  attribute mark_debug of data_rdy: signal is "true";
+--  attribute mark_debug : string;  
+--  attribute mark_debug of fofb_new: signal is "true";
+--  attribute mark_debug of mult_valid: signal is "true";
+--  attribute mark_debug of fofb_valid: signal is "true"; 
+--  attribute mark_debug of setpt_scaled: signal is "true";
+--  attribute mark_debug of setptout_fp: signal is "true";
+--  attribute mark_debug of fofb_setpt: signal is "true";
+--  attribute mark_debug of data_rdy: signal is "true";
 
 begin
 

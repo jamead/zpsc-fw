@@ -21,6 +21,7 @@ proc setSources {} {
   lappend Sources {"../hdl/psc_pkg.vhd" "VHDL 2008"}
 
   lappend Sources {"../hdl/ps_io.vhd" "VHDL 2008"} 
+  lappend Sources {"../hdl/live_time.vhd" "VHDL 2008"} 
   
   lappend Sources {"../hdl/fofb_top_tb.vhd" "VHDL 2008"}
   lappend Sources {"../hdl/fofb_top.vhd" "VHDL 2008"} 

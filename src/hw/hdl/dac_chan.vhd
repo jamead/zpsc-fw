@@ -67,17 +67,17 @@ type state_type is (IDLE, RUN_RAMP, UPDATE_DAC);
 
 
    --debug signals (connect to ila)
-   attribute mark_debug                 : string;
-   attribute mark_debug of dac_data: signal is "true";
-   attribute mark_debug of ramp_dac_setpt: signal is "true";
-   attribute mark_debug of smooth_linear_dac_setpt: signal is "true";
-   attribute mark_debug of dac_setpt_raw: signal is "true";   
-   attribute mark_debug of dac_setpt: signal is "true";
-   attribute mark_debug of dac_setpt_wlim: signal is "true";
-   attribute mark_debug of ramp_active: signal is "true";  
-   attribute mark_debug of smooth_linear_active: signal is "true";  
-   attribute mark_debug of fofb_dac_setpt: signal is "true"; 
-   attribute mark_debug of dac_cntrl: signal is "true";
+--   attribute mark_debug                 : string;
+--   attribute mark_debug of dac_data: signal is "true";
+--   attribute mark_debug of ramp_dac_setpt: signal is "true";
+--   attribute mark_debug of smooth_linear_dac_setpt: signal is "true";
+--   attribute mark_debug of dac_setpt_raw: signal is "true";   
+--   attribute mark_debug of dac_setpt: signal is "true";
+--   attribute mark_debug of dac_setpt_wlim: signal is "true";
+--   attribute mark_debug of ramp_active: signal is "true";  
+--   attribute mark_debug of smooth_linear_active: signal is "true";  
+--   attribute mark_debug of fofb_dac_setpt: signal is "true"; 
+--   attribute mark_debug of dac_cntrl: signal is "true";
 
 
 begin

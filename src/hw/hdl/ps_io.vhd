@@ -74,9 +74,17 @@ architecture behv of ps_io is
   signal ioc_access      : std_logic;
   signal tenhz_datasend  : std_logic;
 
+  signal live_seconds    : std_logic_vector(31 downto 0);
+  signal live_tenths     : std_logic_vector(31 downto 0);
+  signal one_sec_pulse   : std_logic; 
+  signal tenth_sec_pulse : std_logic;
   
---  attribute mark_debug     : string;
---  attribute mark_debug of ch34_dualmode: signal is "true";
+  attribute mark_debug     : string;
+  attribute mark_debug of live_seconds: signal is "true";
+  attribute mark_debug of live_tenths: signal is "true";  
+  attribute mark_debug of one_sec_pulse: signal is "true";
+  attribute mark_debug of tenth_sec_pulse: signal is "true";   
+  
 --  attribute mark_debug of usr_trig: signal is "true"; 
 --  attribute mark_debug of flt_trig: signal is "true";
 --  attribute mark_debug of ioc_access: signal is "true";
@@ -145,10 +153,8 @@ reg_i.fofb_packetsrcvd.val.data <= fofb_stat.packets_rcvd;
 reg_i.fofb_command.val.data <= fofb_stat.command;
 reg_i.fofb_nonce.val.data <= fofb_stat.nonce;
 
-
---tenkhz_freq
---onehz_freq
-
+reg_i.live_time_sec.val.data <= live_seconds;
+reg_i.live_tenhz_count.val.data <= live_tenths;
 
 
 
@@ -806,6 +812,23 @@ tenhz_datasend_stretch : entity work.stretch
 	len => 3000000, -- ~25ms;
 	sig_out => tenhz_datasend_led
 );	
+
+
+
+time_cnt : entity work.live_time
+generic map (
+  CLK_FREQ_HZ => 100_000_000
+)
+port map (
+  clk => pl_clock,
+  rst => pl_reset,
+  seconds => live_seconds,
+  tenths => live_tenths,
+  one_sec_pulse => one_sec_pulse,
+  tenth_sec_pulse => tenth_sec_pulse
+);
+
+
 
 
 end behv;

@@ -30,6 +30,9 @@
 #define CH34_DUALMODE_REG        0x70     // Links Ch3 and Ch4 on and fault registers for Series Connected Supplies
 #define MAIN_DIPOLE_MODE_REG     0x74     // Selects if the Power Supply connected is Main Dipole
 #define SMOOTHRAMP_TYPE_REG      0x78     // Selects the type of smooth ramp (0=linear, 1=cosine)
+#define LIVE_TIME_REG            0x80     // Live Time (seconds) of system
+#define TENHZ_LIVE_TIME_REG      0x84     // Live Time (in tenths of seconds) of system
+
 
 // channel registers
 #define DCCT1_REG                0X00     // DCCT 0

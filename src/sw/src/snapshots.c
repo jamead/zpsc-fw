@@ -93,9 +93,9 @@ void CopyDataChan(float **msg_ptr, u32 *buf_data, u32 numwords, int chan) {
     //buf_data[30000*40+2] = 0;
     //buf_data[30000*40+3] = 0;
     //xil_printf("Start CopyDataChan...\r\n");
-	taskENTER_CRITICAL(); // disables context switches but not interrupts
-	//vTaskSuspendAll();
-	//portENTER_CRITICAL(); // disables context switches and interrupts
+	//taskENTER_CRITICAL(); // disables context switches but not interrupts
+	////vTaskSuspendAll();
+	////portENTER_CRITICAL(); // disables context switches and interrupts
 
 	/*
 	int offsets[] = {0, 10, 18, 26};  // Channel-specific offsets
@@ -245,9 +245,9 @@ void CopyDataChan(float **msg_ptr, u32 *buf_data, u32 numwords, int chan) {
             break;
     }
     //xil_printf("Finish CopyDataChan...\r\n");
-    //xTaskResumeAll();
-    taskEXIT_CRITICAL();
-    //portEXIT_CRITICAL();
+    ////xTaskResumeAll();
+    //taskEXIT_CRITICAL();
+    ////portEXIT_CRITICAL();
 
 }
 
@@ -333,8 +333,6 @@ s32 SendWfmData(char *msg, TriggerInfo *trig) {
 	ReadDMABuf(msg,trig);
 	trig->trigcnt++;
 
-	for (i=0;i<200;i++)
-	  printf("MSG %d :   %f\r\n", i, wfm[i]);
 
 	//hton_conv(msg,MSGWFMLEN);
 	//psc_send(the_server, trig->msgID, MSGWFMLEN, msg);

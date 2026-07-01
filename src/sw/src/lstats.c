@@ -12,6 +12,7 @@
 #include <lwip/stats.h>
 
 #include "local.h"
+#include "pl_regs.h"
 
 #define MAX_TASKS 16
 
@@ -28,7 +29,7 @@ void lstats_push(void *unused)
     char ip_addr[16];
 
     while(1) {
-        vTaskDelay(pdMS_TO_TICKS(1000));
+        vTaskDelay(pdMS_TO_TICKS(500));
 
         struct {
             uint32_t uptime;  // 0
@@ -67,7 +68,8 @@ void lstats_push(void *unused)
 
 
         // uptime as float32
-        msg.uptime = htonf((xTaskGetTickCount() * 1.0f) / configTICK_RATE_HZ);
+        //msg.uptime = htonf((xTaskGetTickCount() * 1.0f) / configTICK_RATE_HZ);
+        msg.uptime = htonf(Xil_In32(XPAR_M_AXI_BASEADDR + LIVE_TIME_REG));
         msg.nthread = htonl(uxTaskGetNumberOfTasks());
 
 #if LWIP_STATS

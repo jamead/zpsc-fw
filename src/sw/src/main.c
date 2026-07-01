@@ -2,6 +2,11 @@
 #include <unistd.h>
 
 
+#include "xil_cache.h"
+#include "xil_printf.h"
+#include "xil_types.h"
+
+
 #include <FreeRTOS.h>
 #include <xil_cache_l.h>
 #include <xil_io.h>
@@ -33,6 +38,23 @@ uint32_t git_hash;
 
 float CONVVOLTSTODACBITS;
 float CONVDACBITSTOVOLTS;
+
+
+
+
+
+static void PrintCacheState(void)
+{
+    u32 sctlr;
+
+    __asm__ volatile ("mrc p15, 0, %0, c1, c0, 0" : "=r" (sctlr));
+
+    xil_printf("SCTLR = 0x%08x\r\n", sctlr);
+    xil_printf("D-cache bit C[2]  = %d\r\n", (sctlr >> 2)  & 1);
+    xil_printf("I-cache bit I[12] = %d\r\n", (sctlr >> 12) & 1);
+}
+
+
 
 
 static void client_event(void *pvt, psc_event evt, psc_client *ckey)
@@ -94,7 +116,7 @@ static void on_startup(void *pvt, psc_key *key)
     lstats_setup();
     sadata_setup();
     snapshot_setup();
-    console_setup();
+    //console_setup();
 }
 
 static void realmain(void *arg)
@@ -121,6 +143,9 @@ static void realmain(void *arg)
         .recv = client_msg,
     };
     
+
+	PrintCacheState();
+
     psc_run(&the_server, &conf);
     while(1) {
         fprintf(stderr, "ERROR: PSC server loop returns!\n");
@@ -159,6 +184,11 @@ void print_firmware_version()
 int main(void) {
 
 	u32 chan, base;
+
+	Xil_DCacheDisable();   // Disable data cache
+	//Xil_ICacheDisable();   // Disable instruction cache
+
+	PrintCacheState();
 
     xil_printf("Power Supply Controller\r\n");
     print_firmware_version();
