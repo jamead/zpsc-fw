@@ -116,7 +116,7 @@ static void on_startup(void *pvt, psc_key *key)
     lstats_setup();
     sadata_setup();
     snapshot_setup();
-    //console_setup();
+    console_setup();
 }
 
 static void realmain(void *arg)
@@ -185,7 +185,7 @@ int main(void) {
 
 	u32 chan, base;
 
-	Xil_DCacheDisable();   // Disable data cache
+	//Xil_DCacheDisable();   // Disable data cache
 	//Xil_ICacheDisable();   // Disable instruction cache
 
 	PrintCacheState();

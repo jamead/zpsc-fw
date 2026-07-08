@@ -64,6 +64,9 @@ proc doOnCreate {} {
   bsp config max_task_name_len "32"
   bsp config generate_runtime_stats "1"
   
+  # Give every FreeRTOS task an FPU context
+  bsp config use_task_fpu_support "2"
+  
   bsp setlib -name xilffs
   bsp config enable_exfat true
   bsp config use_strfunc "1"

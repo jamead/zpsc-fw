@@ -94,7 +94,7 @@ void CopyDataChan(float **msg_ptr, u32 *buf_data, u32 numwords, int chan) {
     //buf_data[30000*40+3] = 0;
     //xil_printf("Start CopyDataChan...\r\n");
 	//taskENTER_CRITICAL(); // disables context switches but not interrupts
-	////vTaskSuspendAll();
+	//vTaskSuspendAll();
 	////portENTER_CRITICAL(); // disables context switches and interrupts
 
 	/*
@@ -245,7 +245,7 @@ void CopyDataChan(float **msg_ptr, u32 *buf_data, u32 numwords, int chan) {
             break;
     }
     //xil_printf("Finish CopyDataChan...\r\n");
-    ////xTaskResumeAll();
+    //xTaskResumeAll();
     //taskEXIT_CRITICAL();
     ////portEXIT_CRITICAL();
 
@@ -526,7 +526,10 @@ void InitTriggerInfo(struct TriggerTypes * trig) {
 static
 void snapshot_push(void *unused)
 {
-    (void)unused;
+
+	//portTASK_USES_FLOATING_POINT();
+
+	(void)unused;
 
 	struct TriggerTypes trig;
 
