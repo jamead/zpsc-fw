@@ -184,6 +184,12 @@ void print_firmware_version()
 int main(void) {
 
 	u32 chan, base;
+	u32 numwords, i;
+
+	union {
+	    u32   u;
+	    float f;
+	} data;
 
 	//Xil_DCacheDisable();   // Disable data cache
 	//Xil_ICacheDisable();   // Disable instruction cache
@@ -248,8 +254,31 @@ int main(void) {
 	    Xil_Out32(base + FAULT_CLEAR_REG,0);
 	}
 
+  /*
+   numwords = Xil_In32(XPAR_M_AXI_BASEADDR + CHBASEADDR + MANCH_FIFO_WDCNT_REG);
+   xil_printf("Number of Words in Manch FIFO : %d\r\n",numwords);
+   numwords = Xil_In32(XPAR_M_AXI_BASEADDR + CHBASEADDR + MANCH_FIFO_DATA_REG);
+   xil_printf("Data Word in Manch FIFO : %d\r\n",numwords);
+   xil_printf("Resetting Manchester FIFO\r\n");
+   Xil_Out32(XPAR_M_AXI_BASEADDR + CHBASEADDR + MANCH_FIFO_RESET_REG, 1);
+   Xil_Out32(XPAR_M_AXI_BASEADDR + CHBASEADDR + MANCH_FIFO_RESET_REG, 0);
 
 
+   while (1) {
+	  usleep(500000);
+      numwords = Xil_In32(XPAR_M_AXI_BASEADDR + CHBASEADDR + MANCH_FIFO_WDCNT_REG);
+      xil_printf("Number of Words in Manch FIFO : %d\r\n",numwords);
+      if (numwords > 0) {
+    	  xil_printf("Reading FIFO\r\n");
+    	  for (i=0;i<62;i++) {
+    	       data.u = Xil_In32(XPAR_M_AXI_BASEADDR + CHBASEADDR + MANCH_FIFO_DATA_REG);
+    	       printf("Word # %2d :  %10x   %8.3f\r\n",i, data.u,  data.f);
+    	   }
+    	   Xil_Out32(XPAR_M_AXI_BASEADDR + CHBASEADDR + MANCH_FIFO_RESET_REG, 1);
+    	   Xil_Out32(XPAR_M_AXI_BASEADDR + CHBASEADDR + MANCH_FIFO_RESET_REG, 0);
+      }
+   }
+  */
 
 
     sys_thread_new("main", realmain, NULL, THREAD_STACKSIZE, DEFAULT_THREAD_PRIO);

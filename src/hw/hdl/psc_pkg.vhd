@@ -162,6 +162,35 @@ end record;
 
 
 
+
+type t_manch_fifo_cntrl_onech is record
+  reset        : std_logic;
+  rdstr        : std_logic;
+end record;
+
+type t_manch_fifo_data_onech is record
+  data         : std_logic_vector(31 downto 0);
+  wdcnt        : std_logic_vector(31 downto 0);  
+end record;
+
+
+type t_manch_fifo_cntrl is record
+  ps1        : t_manch_fifo_cntrl_onech;
+  ps2        : t_manch_fifo_cntrl_onech;
+  ps3        : t_manch_fifo_cntrl_onech;
+  ps4        : t_manch_fifo_cntrl_onech;
+end record;
+
+type t_manch_fifo_data is record
+  ps1        : t_manch_fifo_data_onech;
+  ps2        : t_manch_fifo_data_onech;
+  ps3        : t_manch_fifo_data_onech;
+  ps4        : t_manch_fifo_data_onech;
+end record;
+
+
+
+
 -- Monitor ADC record types
 type t_mon_adcs_onech is record
   dacmon_raw    : signed(15 downto 0);

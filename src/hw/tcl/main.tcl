@@ -55,6 +55,9 @@ proc setSources {} {
   lappend Sources {"../hdl/digio_logic.vhd" "VHDL 2008"} 
   lappend Sources {"../hdl/pulse_enable.vhd" "VHDL 2008"} 
   lappend Sources {"../hdl/pulse_delay.vhd" "VHDL 2008"} 
+  lappend Sources {"../hdl/manchester_decoder.vhd" "VHDL 2008"} 
+  lappend Sources {"../hdl/manchester_rx_32.vhd" "VHDL 2008"} 
+  
      
   lappend Sources {"../hdl/adc_accumulator_top.vhd" "VHDL 2008"}   
   lappend Sources {"../hdl/adc_accumulator.vhd" "VHDL 2008"} 
@@ -114,6 +117,7 @@ proc doOnCreate {} {
   source ${TclPath}/shift_ram.tcl
   source ${TclPath}/float_to_fix.tcl
   source ${TclPath}/fp_mult.tcl
+  source ${TclPath}/manch_data_fifo.tcl
 
   addSources "Sources" 
   

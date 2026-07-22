@@ -805,6 +805,34 @@ reg {
   } ps1_dac_smooth_dy_per_pt_lo @0x364; 
 
 
+
+     
+reg {
+    desc="Manchester FIFO Reset";
+    default sw = rw;
+    default hw = r;
+    field {} val[1];
+  } ps1_manchfifo_reset @0x380;
+   
+reg {
+    desc="Manchester FIFO Data Out";
+    default sw = r;
+    default hw = w;
+    default swacc=true;   
+    field {} val[32];
+  } ps1_manchfifo_data @0x384;
+   
+reg {
+    desc="Manchester FIFO Word Count";
+    default sw = r;
+    default hw = w;
+    field {} val[32];
+  } ps1_manchfifo_wdcnt @0x388;
+
+
+
+
+
 /**** Channel 2 *****/
 
 

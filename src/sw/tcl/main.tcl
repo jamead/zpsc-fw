@@ -64,6 +64,10 @@ proc doOnCreate {} {
   bsp config max_task_name_len "32"
   bsp config generate_runtime_stats "1"
   
+  bsp config check_for_stack_overflow "2"
+  bsp config use_malloc_failed_hook "true"
+  bsp config use_freertos_asserts "true"
+  
   # Give every FreeRTOS task an FPU context
   bsp config use_task_fpu_support "2"
   
@@ -81,7 +85,7 @@ proc doOnCreate {} {
   bsp config lwip_dhcp "true"
   bsp config pbuf_pool_size 2048 
   bsp config mem_size 16777216
-  bsp config tick_rate 750
+  bsp config tick_rate 1000
   bsp config lwip_stats true 
   # bsp config lwip_debug true
   # bsp config pbuf_debug true 

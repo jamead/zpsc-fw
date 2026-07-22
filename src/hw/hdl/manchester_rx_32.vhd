@@ -57,7 +57,7 @@ entity manchester_rx_32 is
   generic (
     CLK_FREQ_HZ   : integer := 100_000_000;
     DATA_RATE_BPS : integer := 50_000;
-    TOL_PERCENT   : integer := 25
+    TOL_PERCENT   : integer := 35
   );
   port (
     clk          : in  std_logic;
@@ -88,12 +88,16 @@ architecture rtl of manchester_rx_32 is
   signal locked       : std_logic := '0';
   signal first_center : std_logic := '0';
 
-  signal ctr     : integer range 0 to BIT_CLKS * 2 := 0;
+  signal ctr        : integer range 0 to BIT_CLKS * 2 := 0;
+  signal latch_ctr  : integer range 0 to BIT_CLKS * 2 := 0;
   signal pkt_sr  : std_logic_vector(31 downto 0) := (others => '0');
   signal bit_cnt : integer range 0 to 31 := 0;
 
   signal packet_valid_i : std_logic := '0';
   signal packet_valid_d : std_logic := '0';
+  
+  signal latch_bit      : std_logic := '0';
+
   
   
   attribute mark_debug                 : string;
@@ -105,6 +109,10 @@ architecture rtl of manchester_rx_32 is
   attribute mark_debug of rx_locked : signal is "true";  
   attribute mark_debug of packet_data: signal is "true";
   attribute mark_debug of packet_valid: signal is "true";
+  attribute mark_debug of first_center: signal is "true";
+  attribute mark_debug of pkt_sr: signal is "true";
+  attribute mark_debug of latch_bit: signal is "true";
+  attribute mark_debug of latch_ctr: signal is "true";
 
 begin
 
@@ -135,8 +143,12 @@ begin
         packet_data    <= (others => '0');
 
         rx_error       <= '0';
+        
+        latch_bit      <= '0';
+        latch_ctr      <= 0; 
 
       else
+        latch_bit <= '0';
         packet_valid_i <= '0';
         packet_valid_d <= packet_valid_i;
         rx_error       <= '0';
@@ -145,6 +157,7 @@ begin
         rx_sync <= rx_meta;
         rx_last <= rx_sync;
 
+        -- on first edge only
         if locked = '0' then
 
           ctr <= 0;
@@ -157,6 +170,7 @@ begin
             pkt_sr       <= (others => '0');
           end if;
 
+
         else
 
           if ctr < BIT_CLKS * 2 then
@@ -166,8 +180,10 @@ begin
           if edge_det = '1' then
 
             if first_center = '1' then
-
+               
               if abs(ctr - HALF_CLKS) <= TOL_CLKS then
+                latch_ctr <= ctr;
+                latch_bit <= '1';
                 first_center <= '0';
                 ctr          <= 0;
 
@@ -197,7 +213,9 @@ begin
 
               elsif abs(ctr - BIT_CLKS) <= TOL_CLKS then
                 ctr <= 0;
-
+                latch_ctr <= ctr;
+                latch_bit <= '1';
+                
                 pkt_sr <= pkt_sr(30 downto 0) & decoded_bit;
 
                 if bit_cnt = 31 then

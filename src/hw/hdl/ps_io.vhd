@@ -41,6 +41,8 @@ entity ps_io is
 	fault_params       : out t_fault_params;
 	fofb_params        : out t_fofb_params;
 	fofb_stat          : in t_fofb_stat;
+	manch_fifo_cntrl   : out t_manch_fifo_cntrl;
+    manch_fifo_data    : in t_manch_fifo_data;
 	ch34_dualmode      : out std_logic;
 	tenkhz_freq        : in std_logic_vector(31 downto 0);
 	ioc_access_led     : out std_logic;
@@ -259,9 +261,12 @@ fofb_params.ps1_addr <= reg_o.ps1_fofb_addr.val.data;
 fofb_params.ps1_scalefactor <= reg_o.ps1_fofb_scalefactor.val.data;
 reg_i.ps1_fofb_setpt.val.data <= fofb_stat.ps1_setpt_flt;
 
-
-
-
+--Manchester fifo
+manch_fifo_cntrl.ps1.reset <= reg_o.ps1_manchfifo_reset.val.data(0);
+manch_fifo_cntrl.ps1.rdstr <= reg_o.ps1_manchfifo_data.val.swacc; 
+manch_fifo_cntrl.ps1.rdstr <= reg_o.ps1_manchfifo_data.val.swacc; 
+reg_i.ps1_manchfifo_data.val.data <= manch_fifo_data.ps1.data;
+reg_i.ps1_manchfifo_wdcnt.val.data <= manch_fifo_data.ps1.wdcnt;
 
 
 -- PS2 Registers

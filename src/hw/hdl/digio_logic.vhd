@@ -20,7 +20,9 @@ entity digio_logic is
     rsts                   : in std_logic_vector(19 downto 0);
     rcom                   : out std_logic_vector(19 downto 0);
     dig_cntrl              : in t_dig_cntrl;
-    dig_stat               : out t_dig_stat
+    dig_stat               : out t_dig_stat;
+    manch_fifo_cntrl       : in t_manch_fifo_cntrl;
+    manch_fifo_data        : out t_manch_fifo_data
 );
 
 end digio_logic;
@@ -30,10 +32,19 @@ architecture behv of digio_logic is
   signal ps_on1             : std_logic_vector(3 downto 0);
   signal ps_on2             : std_logic_vector(3 downto 0);
   signal ps_on1_chan2_dly   : std_logic;
+  
+  signal ps1_packet_valid  : std_logic;
+  signal ps1_packet_data   : std_logic_vector(31 downto 0);
+  signal ps1_rx_locked     : std_logic;   
+  signal ps1_rx_error      : std_logic;
 
   attribute mark_debug     : string;
   --attribute mark_debug of rcom: signal is "true";
---  attribute mark_debug of rsts: signal is "true";
+  attribute mark_debug of rsts: signal is "true";
+  attribute mark_debug of ps1_packet_valid: signal is "true";
+  attribute mark_debug of ps1_packet_data: signal is "true";
+  attribute mark_debug of ps1_rx_locked: signal is "true";
+  attribute mark_debug of ps1_rx_error: signal is "true";
   --attribute mark_debug of ps_on1: signal is "true";
   --attribute mark_debug of ps_on2: signal is "true";  
   --attribute mark_debug of dig_cntrl: signal is "true";
@@ -55,6 +66,23 @@ dig_stat.ps1.flt1 <= rsts(1);
 dig_stat.ps1.flt2 <= rsts(2);
 dig_stat.ps1.spare <= rsts(3);
 dig_stat.ps1.dcct_flt <= rsts(16);
+
+
+
+ps1_manch_decoder : entity work.manch_decoder
+  port map (
+    clk              => clk,
+    reset            => reset,
+    manch_in         => rsts(2),
+    manch_fifo_cntrl => manch_fifo_cntrl.ps1,
+    manch_fifo_data  => manch_fifo_data.ps1
+  );
+
+
+
+
+
+
 
 
 --PS2

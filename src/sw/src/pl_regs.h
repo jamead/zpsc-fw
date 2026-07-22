@@ -105,13 +105,16 @@
 #define FOFB_FASTADDR_REG        0x120     // FOFB Address
 #define FOFB_DACSETPT_REG        0x124     // Read back of Set Point received from FOFB link
 #define FOFB_SCALEFACTOR_REG     0x128     // Scalefactor to convert FOFB Float Input to DAC Bits
-
 #define SMOOTH_LINEAR_LEN_REG    0x150     // Number of Points for Linear portion of Smooth Ramp
 #define SMOOTH_CURVED_LEN_REG    0x154     // Number of Points for Curved portion of Smooth Ramp
 #define SMOOTH_DY_HI_REG         0x158     // Delta Y (in bits) for Linear portion (Q10.22 format)
 #define SMOOTH_DY_LO_REG         0x15C     // Delta Y (in bits) for Linear portion (Q10.22 format)
 #define SMOOTH_DY_PER_PT_HI_REG  0x160     // Delta Y (in bits) for Curved portion (Q10.22 format)
 #define SMOOTH_DY_PER_PT_LO_REG  0x164     // Delta Y (in bits) for Curved portion (Q10.22 format)
+#define MANCH_FIFO_RESET_REG     0x180     // Manchester decoded data fifo reset
+#define MANCH_FIFO_DATA_REG      0x184     // Manchester decoded data fifo data word
+#define MANCH_FIFO_WDCNT_REG     0x188     // Manchester decoded data fifo wordcount (Number of words currently in fifo)
+
 
 
 #define SNAPSHOT_ADDRPTR         0xA00     // Snapshot 20 sec circular buffer current address pointer

@@ -170,6 +170,9 @@ architecture behv of top is
    signal fofb_stat             : t_fofb_stat;
    signal fofb_data             : t_fofb_data;
    
+   signal manch_fifo_cntrl      : t_manch_fifo_cntrl;
+   signal manch_fifo_data       : t_manch_fifo_data;
+   
    signal accum_done            : std_logic_vector(3 downto 0);
    
    signal dac_cntrl             : t_dac_cntrl;
@@ -340,7 +343,9 @@ dig_io: entity work.digio_logic
     rsts => rsts,
     rcom => rcom,
     dig_cntrl => dig_cntrl,
-    dig_stat => dig_stat
+    dig_stat => dig_stat,
+    manch_fifo_cntrl => manch_fifo_cntrl,
+    manch_fifo_data => manch_fifo_data
 );
 
 
@@ -383,6 +388,8 @@ ps_regs: entity work.ps_io
     fault_stat => fault_stat,
     fofb_params => fofb_params,
 	fofb_stat => fofb_stat,
+	manch_fifo_cntrl => manch_fifo_cntrl,
+    manch_fifo_data => manch_fifo_data,
 	tenkhz_freq => tenkhz_freq,
 	ch34_dualmode => ch34_dualmode,
     ioc_access_led => ioc_access_led,

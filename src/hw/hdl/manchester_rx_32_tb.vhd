@@ -87,7 +87,7 @@ begin
     wait for 200 us;
 
     -- Optional preamble to help receiver lock
-    send_packet(x"55555555");
+    send_packet(x"12345678");
     send_packet(x"55555555");
 
     -- Real 32-bit packets
