@@ -324,8 +324,7 @@ void ReadDMABuf(char *msg, TriggerInfo *trig) {
 static
 s32 SendWfmData(char *msg, TriggerInfo *trig) {
 
-    u32 i;
-	float *wfm = (float *)msg;
+
 
     trig->sendbuf = 0;
     trig->active = 0;

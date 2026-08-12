@@ -36,6 +36,7 @@ void net_setup(net_config *conf);
 void discover_setup(void);
 void tftp_setup(void);
 void lstats_setup(void);
+void bpc_setup(void);
 void sadata_setup(void);
 void snapshot_setup(void);
 void console_setup(void);

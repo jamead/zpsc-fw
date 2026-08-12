@@ -550,7 +550,7 @@ void chan_settings(u32 chan, void *msg, u32 msglen) {
     u8 qspibuf[FLASH_PAGE_SIZE];
 
 	u32 *msgptr = (u32 *)msg;
-	u32 addr;
+	u32 val, addr;
 	MsgUnion data;
 
 
@@ -803,11 +803,21 @@ void chan_settings(u32 chan, void *msg, u32 msglen) {
 
         case FAULT_CLEAR_MSG:
      	    xil_printf("Setting Fault Clear CH%d :   Value=%d\r\n",chan,data.u);
-     	    Xil_Out32(XPAR_M_AXI_BASEADDR + FAULT_CLEAR_REG + chan*CHBASEADDR, data.u);
+    		// check if Main Dipole Mode is enabled, if so clear faults on all channels
+     		val = Xil_In32(XPAR_M_AXI_BASEADDR + MAIN_DIPOLE_MODE_REG);
+     		if (val == 1) {
+              xil_printf("Main Dipole Mode is enabled, clear faults on all channels\r\n");
+     	      Xil_Out32(XPAR_M_AXI_BASEADDR + FAULT_CLEAR_REG + 1*CHBASEADDR, data.u);
+     	      Xil_Out32(XPAR_M_AXI_BASEADDR + FAULT_CLEAR_REG + 2*CHBASEADDR, data.u);
+     	      Xil_Out32(XPAR_M_AXI_BASEADDR + FAULT_CLEAR_REG + 3*CHBASEADDR, data.u);
+     	      Xil_Out32(XPAR_M_AXI_BASEADDR + FAULT_CLEAR_REG + 4*CHBASEADDR, data.u);
+     		}
+     		else
+     		  Xil_Out32(XPAR_M_AXI_BASEADDR + FAULT_CLEAR_REG + chan*CHBASEADDR, data.u);
      	    break;
 
         case FAULT_MASK_MSG:
-      	    xil_printf("Setting Fault Mask CH%d :   Value=%d\r\n",chan,data.u);
+      	    xil_printf("Setting Fault Mask CH%d :   Value=0x%x\r\n",chan,data.u);
       	    Xil_Out32(XPAR_M_AXI_BASEADDR + FAULT_MASK_REG + chan*CHBASEADDR, data.u);
       	    break;
 

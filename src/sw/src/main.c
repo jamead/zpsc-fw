@@ -114,6 +114,7 @@ static void on_startup(void *pvt, psc_key *key)
     (void)pvt;
     (void)key;
     lstats_setup();
+    bpc_setup();
     sadata_setup();
     snapshot_setup();
     console_setup();
@@ -184,12 +185,14 @@ void print_firmware_version()
 int main(void) {
 
 	u32 chan, base;
+	/*
 	u32 numwords, i;
 
 	union {
 	    u32   u;
 	    float f;
 	} data;
+    */
 
 	//Xil_DCacheDisable();   // Disable data cache
 	//Xil_ICacheDisable();   // Disable instruction cache
@@ -244,6 +247,7 @@ int main(void) {
 
 	usleep(100);
 	//Set Fault Enable Registers, clear faults
+	/*
 	for (chan=1;chan<5;chan++) {
 		xil_printf("Clearing Faults...\r\n");
 	    base = XPAR_M_AXI_BASEADDR + chan * CHBASEADDR;
@@ -253,8 +257,9 @@ int main(void) {
 	    usleep(10);
 	    Xil_Out32(base + FAULT_CLEAR_REG,0);
 	}
+	*/
 
-  /*
+   /*
    numwords = Xil_In32(XPAR_M_AXI_BASEADDR + CHBASEADDR + MANCH_FIFO_WDCNT_REG);
    xil_printf("Number of Words in Manch FIFO : %d\r\n",numwords);
    numwords = Xil_In32(XPAR_M_AXI_BASEADDR + CHBASEADDR + MANCH_FIFO_DATA_REG);
@@ -278,7 +283,7 @@ int main(void) {
     	   Xil_Out32(XPAR_M_AXI_BASEADDR + CHBASEADDR + MANCH_FIFO_RESET_REG, 0);
       }
    }
-  */
+   */
 
 
     sys_thread_new("main", realmain, NULL, THREAD_STACKSIZE, DEFAULT_THREAD_PRIO);

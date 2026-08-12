@@ -128,8 +128,8 @@ void lstats_push(void *unused)
 
 
 
-        psc_send(the_server, 103, sizeof(ip_addr), &ip_addr);
-        psc_send(the_server, 101, sizeof(msg), &msg);
+        psc_send(the_server, 11, sizeof(ip_addr), &ip_addr);
+        psc_send(the_server, 10, sizeof(msg), &msg);
     }
 }
 

@@ -117,7 +117,7 @@ proc doOnCreate {} {
   source ${TclPath}/shift_ram.tcl
   source ${TclPath}/float_to_fix.tcl
   source ${TclPath}/fp_mult.tcl
-  source ${TclPath}/manch_data_fifo.tcl
+  source ${TclPath}/manchdata_fifo.tcl
 
   addSources "Sources" 
   
