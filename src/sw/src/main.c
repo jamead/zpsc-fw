@@ -14,6 +14,7 @@
 #include <lwip/init.h>
 #include <lwip/sockets.h>
 #include <lwip/sys.h>
+#include <lwip/opt.h>
 #include <netif/xadapter.h>
 #include <xparameters_ps.h>
 
@@ -113,11 +114,21 @@ static void on_startup(void *pvt, psc_key *key)
 {
     (void)pvt;
     (void)key;
+    u32 polarity;
+
     lstats_setup();
-    bpc_setup();
+
     sadata_setup();
     snapshot_setup();
     console_setup();
+
+    polarity = Xil_In32(XPAR_M_AXI_BASEADDR + POLARITY_REG);
+    if (polarity == 0)  {
+      xil_printf("Bipolar, add BPC Thread\r\n");
+      bpc_setup();
+    }
+
+
 }
 
 static void realmain(void *arg)
@@ -201,6 +212,18 @@ int main(void) {
 
     xil_printf("Power Supply Controller\r\n");
     print_firmware_version();
+
+
+    printf("LWIP_SO_SNDTIMEO             = %d\r\n",
+           LWIP_SO_SNDTIMEO);
+    printf("LWIP_SO_RCVTIMEO             = %d\r\n",
+           LWIP_SO_RCVTIMEO);
+    printf("LWIP_NETCONN_FULLDUPLEX      = %d\r\n",
+           LWIP_NETCONN_FULLDUPLEX);
+    printf("LWIP_NETCONN_SEM_PER_THREAD  = %d\r\n",
+           LWIP_NETCONN_SEM_PER_THREAD);
+    printf("MIB2_STATS                    = %d\r\n",
+           MIB2_STATS);
 
 
     //Set 10KHz trigger frequency

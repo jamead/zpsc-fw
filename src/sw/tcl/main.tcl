@@ -94,6 +94,13 @@ proc doOnCreate {} {
   # Make available socket send()/recv() timeout sockopts.
   bsp config udp_ttl "255\n#define LWIP_SO_RCVTIMEO 1\n#define LWIP_SO_SNDTIMEO 1"
   
+  # HACK: inject extra lwipopts.h options the xilinx generator doesn't know about...
+  # Enable socket send()/recv() timeouts.
+  # Enable use of the same socket from multiple FreeRTOS tasks:
+  #   one task doing recv()
+  #   other tasks doing send()
+  #bsp config udp_ttl "255\n#define LWIP_SO_RCVTIMEO 1\n#define LWIP_SO_SNDTIMEO 1\n#define LWIP_NETCONN_SEM_PER_THREAD 1\n#define LWIP_NETCONN_FULLDUPLEX 1"
+  
   
   bsp write
   bsp reload
