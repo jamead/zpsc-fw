@@ -66,10 +66,10 @@ void SendSnapShotStats(char *msg, TriggerTypes *trig) {
        snapstats.inj[i].ts_s    = Xil_In32(XPAR_M_AXI_BASEADDR + INJ1TRIG_TS_S + i*0x10);
        snapstats.inj[i].ts_ns   = Xil_In32(XPAR_M_AXI_BASEADDR + INJ1TRIG_TS_NS + i*0x10);
 
-       snapstats.evr[i].lataddr = Xil_In32(XPAR_M_AXI_BASEADDR + EVRTRIG_BUFPTR);
-       snapstats.evr[i].active  = trig->evr[3].active;
-       snapstats.evr[i].ts_s    = Xil_In32(XPAR_M_AXI_BASEADDR + EVRTRIG_TS_S);
-       snapstats.evr[i].ts_ns   = Xil_In32(XPAR_M_AXI_BASEADDR + EVRTRIG_TS_NS);
+       snapstats.evr[i].lataddr = 0; //Xil_In32(XPAR_M_AXI_BASEADDR + EVRTRIG_BUFPTR);
+       snapstats.evr[i].active  = 0; //trig->evr[3].active;
+       snapstats.evr[i].ts_s    = 0; //Xil_In32(XPAR_M_AXI_BASEADDR + EVRTRIG_TS_S);
+       snapstats.evr[i].ts_ns   = 0; //Xil_In32(XPAR_M_AXI_BASEADDR + EVRTRIG_TS_NS);
    }
 
 
@@ -559,8 +559,8 @@ void snapshot_push(void *unused)
 		        SendWfmData(msgErr_buf[i], &trig.err[i]);
 		    if (trig.inj[i].sendbuf == 1)
 		        SendWfmData(msgInj_buf[i], &trig.inj[i]);
-		    if (trig.evr[i].sendbuf == 1)
-		        SendWfmData(msgEvr_buf[i], &trig.evr[i]);
+		    //if (trig.evr[i].sendbuf == 1)
+		    //    SendWfmData(msgEvr_buf[i], &trig.evr[i]);
 		}
 
         // Send waveform trigger information

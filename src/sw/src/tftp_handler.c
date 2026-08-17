@@ -48,7 +48,7 @@ int tftp_sdcard_read(void* handle, void* buf, int bytes)
         fprintf(stderr, "TFTP read error %d\n", res);
         return -1;
     }
-    printf("TFTP read %d -> %u\n", bytes, n);
+    //printf("TFTP read %d -> %u\n", bytes, n);
     return n;
 }
 

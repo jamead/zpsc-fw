@@ -146,7 +146,8 @@ static void realmain(void *arg)
     }
 
     discover_setup();
-    //tftp_setup();
+    xil_printf("Starting TFTP server...\r\n");
+    tftp_setup();
 
     const psc_config conf = {
         .port = 3000,
@@ -254,11 +255,12 @@ int main(void) {
 
 
 	//EVR reset
-    xil_printf("Resetting EVR GTX...\r\n");
+    xil_printf("Leaving EVR GTX in reset...\r\n");
 	Xil_Out32(XPAR_M_AXI_BASEADDR + EVR_RESET_REG, 0xFF);
 	usleep(100);
-	Xil_Out32(XPAR_M_AXI_BASEADDR + EVR_RESET_REG, 0);
+	//Xil_Out32(XPAR_M_AXI_BASEADDR + EVR_RESET_REG, 0);
 	usleep(100);
+	// set default EVR codes
 	Xil_Out32(XPAR_M_AXI_BASEADDR + EVR_PM_EVENTNUM_REG, 29);
 	Xil_Out32(XPAR_M_AXI_BASEADDR + EVR_1HZ_EVENTNUM_REG, 32);
 	Xil_Out32(XPAR_M_AXI_BASEADDR + EVR_INJ_EVENTNUM_REG, 32);
@@ -269,44 +271,7 @@ int main(void) {
 	Xil_Out32(XPAR_M_AXI_BASEADDR + FOFB_IPADDR_REG, 0x0A008E64);
 
 	usleep(100);
-	//Set Fault Enable Registers, clear faults
-	/*
-	for (chan=1;chan<5;chan++) {
-		xil_printf("Clearing Faults...\r\n");
-	    base = XPAR_M_AXI_BASEADDR + chan * CHBASEADDR;
-	    Xil_Out32(base + FAULT_MASK_REG,0x1FEF);
-	    xil_printf("Fault Mask Reg = %x\r\n",Xil_In32(base + FAULT_MASK_REG));
-	    Xil_Out32(base + FAULT_CLEAR_REG,1);
-	    usleep(10);
-	    Xil_Out32(base + FAULT_CLEAR_REG,0);
-	}
-	*/
 
-   /*
-   numwords = Xil_In32(XPAR_M_AXI_BASEADDR + CHBASEADDR + MANCH_FIFO_WDCNT_REG);
-   xil_printf("Number of Words in Manch FIFO : %d\r\n",numwords);
-   numwords = Xil_In32(XPAR_M_AXI_BASEADDR + CHBASEADDR + MANCH_FIFO_DATA_REG);
-   xil_printf("Data Word in Manch FIFO : %d\r\n",numwords);
-   xil_printf("Resetting Manchester FIFO\r\n");
-   Xil_Out32(XPAR_M_AXI_BASEADDR + CHBASEADDR + MANCH_FIFO_RESET_REG, 1);
-   Xil_Out32(XPAR_M_AXI_BASEADDR + CHBASEADDR + MANCH_FIFO_RESET_REG, 0);
-
-
-   while (1) {
-	  usleep(500000);
-      numwords = Xil_In32(XPAR_M_AXI_BASEADDR + CHBASEADDR + MANCH_FIFO_WDCNT_REG);
-      xil_printf("Number of Words in Manch FIFO : %d\r\n",numwords);
-      if (numwords > 0) {
-    	  xil_printf("Reading FIFO\r\n");
-    	  for (i=0;i<62;i++) {
-    	       data.u = Xil_In32(XPAR_M_AXI_BASEADDR + CHBASEADDR + MANCH_FIFO_DATA_REG);
-    	       printf("Word # %2d :  %10x   %8.3f\r\n",i, data.u,  data.f);
-    	   }
-    	   Xil_Out32(XPAR_M_AXI_BASEADDR + CHBASEADDR + MANCH_FIFO_RESET_REG, 1);
-    	   Xil_Out32(XPAR_M_AXI_BASEADDR + CHBASEADDR + MANCH_FIFO_RESET_REG, 0);
-      }
-   }
-   */
 
 
     sys_thread_new("main", realmain, NULL, THREAD_STACKSIZE, DEFAULT_THREAD_PRIO);

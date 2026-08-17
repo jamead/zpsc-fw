@@ -209,6 +209,7 @@ void Calc_WriteLinearSmooth(u32 chan, s32 new_setpt) {
 	s32 cur_setpt;
 	u32 num_samples;
 	float ramp_rate, ramp_duration;
+	u32 maindipole_mode;
 
 
 	float percent_curved = 0.1f;
@@ -239,11 +240,11 @@ void Calc_WriteLinearSmooth(u32 chan, s32 new_setpt) {
 
 
 	// if in main dipole main, ramp duration minimum length is always 2 seconds
-	//maindipole_mode = Xil_In32(XPAR_M_AXI_BASEADDR + MAIN_DIPOLE_MODE_REG);
-	//if ((ramp_duration < 2) && (maindipole_mode == 1)) {
-	//   ramp_duration = 2;
-	//   printf("Adjusted Ramp Duration: %f (sec)\r\n",ramp_duration);
-	//}
+	maindipole_mode = Xil_In32(XPAR_M_AXI_BASEADDR + MAIN_DIPOLE_MODE_REG);
+	if ((ramp_duration < 2) && (maindipole_mode == 1)) {
+	   ramp_duration = 2;
+	   printf("Adjusted Ramp Duration: %f (sec)\r\n",ramp_duration);
+	}
 
 	num_samples = ramp_duration * SAMPLERATE;
 	xil_printf("Numsamples: %d (samples)\r\n", num_samples);
