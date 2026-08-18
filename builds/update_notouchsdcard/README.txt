@@ -8,3 +8,8 @@ curl --tftp-no-options -T BOOT.bin tftp://<ip address of zpsc>/BOOT.bin
 
 Then power-cycle
 
+
+
+#DHCP Server
+> sudo systemctl restart kea-dhcp4-server
+> sudo systemctl start kea-dhcp4-server
