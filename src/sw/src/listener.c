@@ -17,14 +17,18 @@
 #include "pscmsg.h"
 #include "local.h"
 
-#if PSC_MAX_CLIENTS > 32
-#  error PSC_MAX_CLIENTS too large
-#endif
-
 /*
- * Only report unusually long waits/sends.  This keeps the normal
- * periodic traffic from flooding the console.
+ * This server intentionally supports exactly one IOC connection.
+ *
+ * Important ownership rule:
+ *     handle_client() is the ONLY code that close()s an established
+ *     client socket.
+ *
+ * TX tasks may request that the connection be torn down, but they do not
+ * close or shutdown the socket from another thread.  handle_client() sees
+ * the request on the next receive/keep-alive, or when SO_RCVTIMEO expires.
  */
+
 #define NET_SLOW_MS 1000u
 
 static unsigned long net_uptime_ms(void)
@@ -38,11 +42,8 @@ static unsigned long net_uptime_ms(void)
 
 
 struct psc_client {
-    unsigned index;              /* index in psc_key::clients */
-
-    int sock;                    /* -1 means do not transmit */
+    int sock;                    /* valid while client_active != 0 */
     struct sockaddr_in peeraddr;
-
     psc_key *PSC;
 
     char rxbuf[8 + PSC_MAX_RX_MSG_LEN];
@@ -51,28 +52,23 @@ struct psc_client {
 
 struct psc_key {
     /*
-     * Serializes TCP transmit operations and final socket close.
-     * This mutex may be held while psc_sendmsg()/send() blocks.
-     *
-     * IMPORTANT: the listener/client allocator does NOT use this mutex.
+     * Serializes all TCP transmissions with final client socket close.
+     * Never use this mutex in the accept path.
      */
     sys_mutex_t sendguard;
 
     /*
-     * Protects clients_used and the mutable fields in clients[].
-     *
-     * NEVER hold clientguard while calling a potentially blocking
-     * lwIP function such as send(), recv(), shutdown(), close(),
-     * accept(), etc.
+     * Protects client_active, disconnect_requested, client.sock, and
+     * client.peeraddr.  Never hold this mutex across a blocking lwIP call.
      */
     sys_mutex_t clientguard;
 
     const psc_config *conf;
-
     int listen_sock;
 
-    uint32_t clients_used;
-    struct psc_client clients[PSC_MAX_CLIENTS];
+    int client_active;
+    int disconnect_requested;
+    struct psc_client client;
 };
 
 
@@ -100,95 +96,127 @@ static void handle_client(void *raw);
 
 
 /*
- * Return a diagnostic snapshot of clients_used.
- * clientguard is held only for the short memory access.
+ * Snapshot the current client state for logging or short decisions.
  */
-static uint32_t psc_clients_used_snapshot(struct psc_key *key)
+static void psc_client_snapshot(struct psc_key *PSC,
+                                int *active,
+                                int *sock,
+                                int *disconnect_requested)
 {
-    uint32_t used;
+    sys_mutex_lock(&PSC->clientguard);
 
-    sys_mutex_lock(&key->clientguard);
-    used = key->clients_used;
-    sys_mutex_unlock(&key->clientguard);
+    if (active)
+        *active = PSC->client_active;
 
-    return used;
+    if (sock)
+        *sock = PSC->client.sock;
+
+    if (disconnect_requested)
+        *disconnect_requested = PSC->disconnect_requested;
+
+    sys_mutex_unlock(&PSC->clientguard);
 }
 
 
 /*
- * Allocate and fully initialize a client slot.
+ * Request cleanup of the currently active socket.
  *
- * This function intentionally uses clientguard, NOT sendguard.
- * Therefore a blocked TCP send cannot prevent the listener from
- * allocating a newly accepted connection and returning to accept().
+ * No shutdown() or close() is done here.  The receive task owns cleanup.
+ * With the IOC's 1 Hz keep-alive this is normally noticed within one second;
+ * SO_RCVTIMEO provides the fallback if RX traffic has stopped completely.
  */
-static struct psc_client *psc_client_alloc(struct psc_key *key,
-                                           int sock,
-                                           const struct sockaddr_in *peeraddr)
+static void psc_request_disconnect(struct psc_key *PSC, int expected_sock)
 {
-    psc_client *ret = NULL;
+    sys_mutex_lock(&PSC->clientguard);
 
-    sys_mutex_lock(&key->clientguard);
-
-    for (unsigned i = 0; i < PSC_MAX_CLIENTS; i++) {
-
-        if (key->clients_used & (1u << i))
-            continue;
-
-        ret = &key->clients[i];
-        memset(ret, 0, sizeof(*ret));
-
-        ret->index = i;
-        ret->sock = sock;
-        ret->peeraddr = *peeraddr;
-        ret->PSC = key;
-
-        /*
-         * Mark the slot used LAST, after the structure is completely
-         * initialized.  A sender can never observe a half-built client.
-         */
-        key->clients_used |= (1u << i);
-
-        break;
+    if (PSC->client_active &&
+        PSC->client.sock == expected_sock) {
+        PSC->disconnect_requested = 1;
     }
 
-    sys_mutex_unlock(&key->clientguard);
-
-    return ret;
+    sys_mutex_unlock(&PSC->clientguard);
 }
 
 
-static void psc_client_free(struct psc_client *cli)
+static void psc_configure_client_socket(int sock)
 {
-    struct psc_key *key;
-    unsigned index;
-    uint32_t used;
+    int val;
 
-    if (!cli || !cli->PSC)
-        return;
+    /* Small control/status messages benefit from disabling Nagle. */
+    val = 1;
+    if (setsockopt(sock,
+                   IPPROTO_TCP,
+                   TCP_NODELAY,
+                   &val,
+                   sizeof(val)) == -1) {
+        NETLOG("SETSOCKOPT TCP_NODELAY ERROR sock=%d errno=%d",
+               sock,
+               errno);
+    }
 
-    key = cli->PSC;
-    index = cli->index;
-
-    sys_mutex_lock(&key->clientguard);
-
-    key->clients_used &= ~(1u << index);
-
+#if LWIP_SO_SNDTIMEO
     /*
-     * Spoil the structure so a stale psc_client pointer cannot
-     * accidentally look like an active client.
+     * Do not let a stalled IOC hold sendguard forever.
      */
-    memset(cli, 0, sizeof(*cli));
-    cli->sock = -1;
-    cli->PSC = NULL;
+#  if LWIP_SO_SNDRCVTIMEO_NONSTANDARD
+    val = 1000;                  /* milliseconds */
+    if (setsockopt(sock,
+                   SOL_SOCKET,
+                   SO_SNDTIMEO,
+                   &val,
+                   sizeof(val)) == -1) {
+#  else
+    {
+        struct timeval tv = {1, 0}; /* seconds, microseconds */
+        if (setsockopt(sock,
+                       SOL_SOCKET,
+                       SO_SNDTIMEO,
+                       &tv,
+                       sizeof(tv)) == -1) {
+#  endif
+            NETLOG("SETSOCKOPT SO_SNDTIMEO ERROR sock=%d errno=%d",
+                   sock,
+                   errno);
+        }
+#  if !LWIP_SO_SNDRCVTIMEO_NONSTANDARD
+    }
+#  endif
+#else
+    NETLOG("WARNING: LWIP_SO_SNDTIMEO is disabled");
+#endif
 
-    used = key->clients_used;
-
-    sys_mutex_unlock(&key->clientguard);
-
-    NETLOG("CLIENT FREE slot=%u clients=0x%x",
-           index,
-           (unsigned)used);
+#if LWIP_SO_RCVTIMEO
+    /*
+     * The IOC sends a 1 Hz keep-alive.  Five seconds with no receive traffic
+     * is treated as a dead connection.  This timeout is also what guarantees
+     * that a TX-side disconnect request can eventually wake a blocked RX task.
+     */
+#  if LWIP_SO_SNDRCVTIMEO_NONSTANDARD
+    val = 5000;                  /* milliseconds */
+    if (setsockopt(sock,
+                   SOL_SOCKET,
+                   SO_RCVTIMEO,
+                   &val,
+                   sizeof(val)) == -1) {
+#  else
+    {
+        struct timeval tv = {10, 0}; /* seconds, microseconds */
+        if (setsockopt(sock,
+                       SOL_SOCKET,
+                       SO_RCVTIMEO,
+                       &tv,
+                       sizeof(tv)) == -1) {
+#  endif
+            NETLOG("SETSOCKOPT SO_RCVTIMEO ERROR sock=%d errno=%d",
+                   sock,
+                   errno);
+        }
+#  if !LWIP_SO_SNDRCVTIMEO_NONSTANDARD
+    }
+#  endif
+#else
+    NETLOG("WARNING: LWIP_SO_RCVTIMEO is disabled; reconnect cleanup may block");
+#endif
 }
 
 
@@ -209,6 +237,11 @@ void psc_run(psc_key **key, const psc_config *config)
     ERROR(!PSC, "Unable to allocate %zu bytes for PSC", sizeof(*PSC));
 
     PSC->conf = config;
+    PSC->listen_sock = -1;
+    PSC->client.sock = -1;
+    PSC->client.PSC = PSC;
+    PSC->client_active = 0;
+    PSC->disconnect_requested = 0;
 
     PERROR(sys_mutex_new(&PSC->sendguard) != ERR_OK, "sendguard");
     PERROR(sys_mutex_new(&PSC->clientguard) != ERR_OK, "clientguard");
@@ -222,7 +255,7 @@ void psc_run(psc_key **key, const psc_config *config)
            "bind to port %d",
            config->port);
 
-    PERROR(listen(PSC->listen_sock, 2) == -1, "listen");
+    PERROR(listen(PSC->listen_sock, 1) == -1, "listen");
 
     if (key)
         *key = PSC;
@@ -230,167 +263,99 @@ void psc_run(psc_key **key, const psc_config *config)
     if (config->start)
         (*config->start)(config->pvt, PSC);
 
-    NETLOG("SERVER READY port=%d listen_sock=%d",
+    NETLOG("SERVER READY port=%d listen_sock=%d single-client",
            config->port,
            PSC->listen_sock);
 
     while (1) {
-
-        psc_client *C = NULL;
         struct sockaddr_in caddr;
         socklen_t clen = sizeof(caddr);
         int client;
+        int active;
+        int oldsock;
 
         client = accept(PSC->listen_sock,
                         (void *)&caddr,
                         &clen);
 
-        /*
-         * Check accept() before using the returned descriptor.
-         */
         if (client == -1) {
             int saved_errno = errno;
 
-            NETLOG("ACCEPT ERROR errno=%d port=%d clients=0x%x",
+            psc_client_snapshot(PSC, &active, &oldsock, NULL);
+
+            NETLOG("ACCEPT ERROR errno=%d port=%d active=%d sock=%d",
                    saved_errno,
                    config->port,
-                   (unsigned)psc_clients_used_snapshot(PSC));
+                   active,
+                   oldsock);
 
             sys_msleep(1000);
             continue;
         }
 
-        NETLOG("ACCEPT sock=%d peer=%s:%d clients=0x%x",
+        psc_client_snapshot(PSC, &active, &oldsock, NULL);
+
+        NETLOG("ACCEPT sock=%d peer=%s:%d active=%d current_sock=%d",
                client,
                inet_ntoa(caddr.sin_addr.s_addr),
                ntohs(caddr.sin_port),
-               (unsigned)psc_clients_used_snapshot(PSC));
+               active,
+               oldsock);
 
         /*
-         * Disable Nagle.  These messages are small and latency matters
-         * more than aggregation.
+         * Only one IOC is supported.
+         *
+         * A new connection while the old one is still active is interpreted
+         * as a reconnect attempt.  Ask the old handler to exit, close this
+         * newly accepted socket, and let the IOC retry.  The old handler will
+         * normally exit on the next 1 Hz keep-alive, or within five seconds
+         * because of SO_RCVTIMEO.
+         *
+         * Most importantly, there is no client-slot allocation to leak.
          */
-        {
-            int val = 1;
+        if (active) {
+            psc_request_disconnect(PSC, oldsock);
 
-            if (setsockopt(client,
-                           IPPROTO_TCP,
-                           TCP_NODELAY,
-                           &val,
-                           sizeof(val)) == -1) {
-                NETLOG("SETSOCKOPT TCP_NODELAY ERROR sock=%d errno=%d",
-                       client,
-                       errno);
-            }
-        }
-
-#if LWIP_SO_SNDTIMEO && LWIP_SO_RCVTIMEO
-
-        /*
-         * Time with the TCP TX path unable to accept more data before
-         * send() returns an error.
-         */
-        {
-#  if LWIP_SO_SNDRCVTIMEO_NONSTANDARD
-            int val = 1000;              /* milliseconds */
-#  else
-            struct timeval val = {5, 0}; /* seconds, microseconds */
-#  endif
-
-            if (setsockopt(client,
-                           SOL_SOCKET,
-                           SO_SNDTIMEO,
-                           &val,
-                           sizeof(val)) == -1) {
-                NETLOG("SETSOCKOPT SO_SNDTIMEO ERROR sock=%d errno=%d",
-                       client,
-                       errno);
-            }
-        }
-
-        /*
-         * The IOC sends a 1 Hz keep-alive.  Five seconds with no RX
-         * traffic is therefore treated as a dead connection.
-         */
-        {
-#  if LWIP_SO_SNDRCVTIMEO_NONSTANDARD
-            int val = 5000;              /* milliseconds */
-#  else
-            struct timeval val = {5, 0}; /* seconds, microseconds */
-#  endif
-
-            if (setsockopt(client,
-                           SOL_SOCKET,
-                           SO_RCVTIMEO,
-                           &val,
-                           sizeof(val)) == -1) {
-                NETLOG("SETSOCKOPT SO_RCVTIMEO ERROR sock=%d errno=%d",
-                       client,
-                       errno);
-            }
-        }
-
-#else
-
-        {
-            static uint8_t done;
-
-            if (!done) {
-                done = 1;
-                NETLOG("INFO: SO_SNDTIMEO/SO_RCVTIMEO not supported");
-            }
-        }
-
-#endif
-
-        /*
-         * IMPORTANT:
-         * psc_client_alloc() uses clientguard only.  It can never be
-         * blocked by a task that is stuck in send() holding sendguard.
-         */
-        C = psc_client_alloc(PSC, client, &caddr);
-
-        if (!C) {
-            NETLOG("*** CLIENT ALLOC FAILED *** "
-                   "sock=%d peer=%s:%d clients=0x%x",
-                   client,
+            NETLOG("RECONNECT REQUEST peer=%s:%d; "
+                   "requesting old sock=%d cleanup and rejecting sock=%d",
                    inet_ntoa(caddr.sin_addr.s_addr),
                    ntohs(caddr.sin_port),
-                   (unsigned)psc_clients_used_snapshot(PSC));
+                   oldsock,
+                   client);
 
-            /*
-             * This socket was never handed to handle_client(), so the
-             * listener owns this close().
-             */
             close(client);
             continue;
         }
 
-        NETLOG("CLIENT ALLOC slot=%u sock=%d peer=%s:%d clients=0x%x",
-               C->index,
+        psc_configure_client_socket(client);
+
+        /*
+         * Publish the new client atomically before starting its handler.
+         */
+        sys_mutex_lock(&PSC->clientguard);
+
+        PSC->client.sock = client;
+        PSC->client.peeraddr = caddr;
+        PSC->client.PSC = PSC;
+        PSC->disconnect_requested = 0;
+        PSC->client_active = 1;
+
+        sys_mutex_unlock(&PSC->clientguard);
+
+        NETLOG("CLIENT CONNECT sock=%d peer=%s:%d",
                client,
                inet_ntoa(caddr.sin_addr.s_addr),
-               ntohs(caddr.sin_port),
-               (unsigned)psc_clients_used_snapshot(PSC));
+               ntohs(caddr.sin_port));
 
-        /*
-         * lwIP does not allow thread creation to fail.
-         */
         sys_thread_new("handle client",
                        handle_client,
-                       C,
+                       &PSC->client,
                        THREAD_STACKSIZE,
-                       DEFAULT_THREAD_PRIO);
-
-        /*
-         * Immediately return to accept().  No sendguard is acquired
-         * anywhere in the listener path.
-         */
+                       config->client_prio ? config->client_prio
+                                           : DEFAULT_THREAD_PRIO);
     }
 
-    /*
-     * psc_run() normally never exits.
-     */
+    /* psc_run() normally never exits. */
     if (key)
         *key = NULL;
 }
@@ -400,29 +365,47 @@ static void handle_client(void *raw)
 {
     psc_client *C = raw;
     struct psc_key *PSC = C->PSC;
-    int sock = C->sock;
-
-    NETLOG("HANDLE START slot=%u sock=%d peer=%s:%d clients=0x%x",
-           C->index,
-           sock,
-           inet_ntoa(C->peeraddr.sin_addr.s_addr),
-           ntohs(C->peeraddr.sin_port),
-           (unsigned)psc_clients_used_snapshot(PSC));
+    struct sockaddr_in peeraddr;
+    int sock;
 
     /*
-     * Notify the application that the client connected.
+     * Snapshot immutable-for-this-connection fields.  The listener does not
+     * reuse the single client object until client_active has been cleared.
      */
+    sys_mutex_lock(&PSC->clientguard);
+    sock = C->sock;
+    peeraddr = C->peeraddr;
+    sys_mutex_unlock(&PSC->clientguard);
+
+    NETLOG("HANDLE START sock=%d peer=%s:%d",
+           sock,
+           inet_ntoa(peeraddr.sin_addr.s_addr),
+           ntohs(peeraddr.sin_port));
+
     if (PSC->conf->conn)
         (*PSC->conf->conn)(PSC->conf->pvt, PSC_CONN, C);
 
-    /*
-     * Receive messages from the IOC.
-     */
     while (1) {
-
         uint16_t msgid;
         uint32_t msglen = sizeof(C->rxbuf);
+        int disconnect_requested;
+        int current_sock;
+        int active;
         int ret;
+
+        psc_client_snapshot(PSC,
+                            &active,
+                            &current_sock,
+                            &disconnect_requested);
+
+        if (!active || current_sock != sock || disconnect_requested) {
+            NETLOG("HANDLE EXIT REQUEST sock=%d active=%d current_sock=%d request=%d",
+                   sock,
+                   active,
+                   current_sock,
+                   disconnect_requested);
+            break;
+        }
 
         ret = psc_recvmsg(sock,
                           &msgid,
@@ -432,33 +415,30 @@ static void handle_client(void *raw)
 
         if (ret) {
             int saved_errno = errno;
-            int current_sock;
-            uint32_t used;
 
-            sys_mutex_lock(&PSC->clientguard);
-            current_sock = C->sock;
-            used = PSC->clients_used;
-            sys_mutex_unlock(&PSC->clientguard);
-
-            /*
-             * current_sock == -1 means a TX task already detected an
-             * error and called shutdown(), which woke this recv().
-             */
-            NETLOG("RX ERROR slot=%u sock=%d C->sock=%d "
-                   "ret=%d errno=%d clients=0x%x",
-                   C->index,
+            NETLOG("RX ERROR sock=%d ret=%d errno=%d peer=%s:%d",
                    sock,
-                   current_sock,
                    ret,
                    saved_errno,
-                   (unsigned)used);
+                   inet_ntoa(peeraddr.sin_addr.s_addr),
+                   ntohs(peeraddr.sin_port));
 
             break;
         }
 
         /*
-         * Pass the received message to the application.
+         * A reconnect or TX error may have requested disconnect while recv()
+         * was completing.  Do not dispatch another application message after
+         * that request.
          */
+        psc_client_snapshot(PSC,
+                            &active,
+                            &current_sock,
+                            &disconnect_requested);
+
+        if (!active || current_sock != sock || disconnect_requested)
+            break;
+
         (*PSC->conf->recv)(PSC->conf->pvt,
                            C,
                            msgid,
@@ -467,103 +447,54 @@ static void handle_client(void *raw)
     }
 
     /*
-     * Notify the application that the client disconnected.
+     * Tell the application while C still describes this connection.
      */
     if (PSC->conf->conn)
         (*PSC->conf->conn)(PSC->conf->pvt, PSC_DIS, C);
 
-    {
-        int current_sock;
-        uint32_t used;
-
-        sys_mutex_lock(&PSC->clientguard);
-        current_sock = C->sock;
-        used = PSC->clients_used;
-        sys_mutex_unlock(&PSC->clientguard);
-
-        NETLOG("DISCONNECT slot=%u sock=%d C->sock=%d "
-               "peer=%s:%d clients=0x%x",
-               C->index,
-               sock,
-               current_sock,
-               inet_ntoa(C->peeraddr.sin_addr.s_addr),
-               ntohs(C->peeraddr.sin_port),
-               (unsigned)used);
-    }
-
     /*
-     * Synchronize with any task currently transmitting.
-     *
-     * This is allowed to wait.  The important change is that the
-     * listener/client allocator does NOT wait for sendguard anymore.
+     * Wait until any in-progress psc_send()/psc_send_one() finishes.  The
+     * socket send timeout should bound this wait even if the IOC stops reading.
      */
-    NETLOG("CLEANUP WAIT SENDGUARD slot=%u sock=%d",
-           C->index,
-           sock);
+    NETLOG("CLEANUP WAIT SENDGUARD sock=%d", sock);
 
     sys_mutex_lock(&PSC->sendguard);
 
-    NETLOG("CLEANUP GOT SENDGUARD slot=%u sock=%d",
-           C->index,
-           sock);
+    NETLOG("CLEANUP GOT SENDGUARD sock=%d", sock);
 
     /*
-     * Update client state while holding clientguard only briefly.
-     * Lock order, when both are needed, is always:
-     *
-     *     sendguard -> clientguard
+     * handle_client() is the one and only owner of close() for an established
+     * client connection.
      */
-    sys_mutex_lock(&PSC->clientguard);
-
-    if (C->sock == sock)
-        C->sock = -1;
-
-    sys_mutex_unlock(&PSC->clientguard);
-
-    /*
-     * handle_client() is the ONLY task that closes an established
-     * client socket.
-     */
-    NETLOG("CLOSE BEGIN slot=%u sock=%d clients=0x%x",
-           C->index,
-           sock,
-           (unsigned)psc_clients_used_snapshot(PSC));
-
     {
         int ret = close(sock);
 
         if (ret == -1) {
-            int saved_errno = errno;
-
-            NETLOG("CLOSE ERROR slot=%u sock=%d errno=%d",
-                   C->index,
+            NETLOG("CLOSE ERROR sock=%d errno=%d",
                    sock,
-                   saved_errno);
+                   errno);
         } else {
-            NETLOG("CLOSE DONE slot=%u sock=%d",
-                   C->index,
-                   sock);
+            NETLOG("CLOSE DONE sock=%d", sock);
         }
     }
 
+    /*
+     * Make the server available for the next IOC connection only after the old
+     * descriptor is fully closed.
+     */
+    sys_mutex_lock(&PSC->clientguard);
+
+    if (PSC->client_active && PSC->client.sock == sock) {
+        PSC->client.sock = -1;
+        PSC->client_active = 0;
+        PSC->disconnect_requested = 0;
+    }
+
+    sys_mutex_unlock(&PSC->clientguard);
+
     sys_mutex_unlock(&PSC->sendguard);
 
-    /*
-     * Keep this call.
-     *
-     * It clears the client's bit in clients_used.  Do this only
-     * after the old socket has been completely closed.
-     */
-    {
-        unsigned slot = C->index;
-
-        psc_client_free(C);
-
-        NETLOG("HANDLE DELETE slot=%u sock=%d clients=0x%x",
-               slot,
-               sock,
-               (unsigned)psc_clients_used_snapshot(PSC));
-    }
+    NETLOG("HANDLE DELETE sock=%d", sock);
 
     vTaskDelete(NULL);
 }
@@ -576,17 +507,17 @@ void psc_send(psc_key *PSC,
 {
     TickType_t wait_start;
     TickType_t wait_elapsed;
+    int active;
+    int disconnect_requested;
+    int sock;
+    int ret;
+    int saved_errno;
+    TickType_t send_start;
+    TickType_t send_elapsed;
 
     if (!PSC)
         return;
 
-    /*
-     * All transmitters share sendguard.  Measure how long we wait
-     * for it so a blocked sender can be identified postmortem.
-     *
-     * A blocked sender can delay other transmitters and client cleanup,
-     * but it can no longer block the listener from accepting clients.
-     */
     wait_start = xTaskGetTickCount();
 
     sys_mutex_lock(&PSC->sendguard);
@@ -594,118 +525,54 @@ void psc_send(psc_key *PSC,
     wait_elapsed = xTaskGetTickCount() - wait_start;
 
     if (wait_elapsed > pdMS_TO_TICKS(NET_SLOW_MS)) {
-        NETLOG("SLOW SENDGUARD WAIT msgid=%u time=%lu ms clients=0x%x",
+        NETLOG("SLOW SENDGUARD WAIT msgid=%u time=%lu ms",
                (unsigned)msgid,
                (unsigned long)(((uint64_t)wait_elapsed * 1000ULL) /
-                               (uint64_t)configTICK_RATE_HZ),
-               (unsigned)psc_clients_used_snapshot(PSC));
+                               (uint64_t)configTICK_RATE_HZ));
     }
 
-    for (unsigned idx = 0; idx < PSC_MAX_CLIENTS; idx++) {
+    psc_client_snapshot(PSC,
+                        &active,
+                        &sock,
+                        &disconnect_requested);
 
-        psc_client *C = &PSC->clients[idx];
-        int sock = -1;
-        unsigned slot = idx;
-        int active = 0;
-        int ret;
-        int saved_errno;
-        TickType_t send_start;
-        TickType_t send_elapsed;
+    if (!active || sock < 0 || disconnect_requested) {
+        sys_mutex_unlock(&PSC->sendguard);
+        return;
+    }
+
+    send_start = xTaskGetTickCount();
+
+    ret = psc_sendmsg(sock,
+                      msgid,
+                      msg,
+                      msglen,
+                      0);
+
+    saved_errno = errno;
+    send_elapsed = xTaskGetTickCount() - send_start;
+
+    if (send_elapsed > pdMS_TO_TICKS(NET_SLOW_MS)) {
+        NETLOG("SLOW SEND sock=%d msgid=%u time=%lu ms ret=%d errno=%d",
+               sock,
+               (unsigned)msgid,
+               (unsigned long)(((uint64_t)send_elapsed * 1000ULL) /
+                               (uint64_t)configTICK_RATE_HZ),
+               ret,
+               saved_errno);
+    }
+
+    if (ret) {
+        NETLOG("TX ERROR sock=%d msgid=%u ret=%d errno=%d; requesting disconnect",
+               sock,
+               (unsigned)msgid,
+               ret,
+               saved_errno);
 
         /*
-         * Snapshot client state under clientguard, then release it
-         * BEFORE calling the potentially blocking psc_sendmsg().
+         * Do not close/shutdown from this TX task.  The RX handler owns close().
          */
-        sys_mutex_lock(&PSC->clientguard);
-
-        if (PSC->clients_used & (1u << idx)) {
-            active = 1;
-            sock = C->sock;
-            slot = C->index;
-        }
-
-        sys_mutex_unlock(&PSC->clientguard);
-
-        if (!active || sock < 0)
-            continue;
-
-        send_start = xTaskGetTickCount();
-
-        ret = psc_sendmsg(sock,
-                          msgid,
-                          msg,
-                          msglen,
-                          0);
-
-        saved_errno = errno;
-        send_elapsed = xTaskGetTickCount() - send_start;
-
-        /*
-         * Do not log normal sends.  Only log unusually slow calls.
-         */
-        if (send_elapsed > pdMS_TO_TICKS(NET_SLOW_MS)) {
-            NETLOG("SLOW SEND slot=%u sock=%d msgid=%u "
-                   "time=%lu ms ret=%d errno=%d",
-                   slot,
-                   sock,
-                   (unsigned)msgid,
-                   (unsigned long)(((uint64_t)send_elapsed * 1000ULL) /
-                                   (uint64_t)configTICK_RATE_HZ),
-                   ret,
-                   saved_errno);
-        }
-
-        if (ret) {
-            int do_shutdown = 0;
-
-            NETLOG("TX ERROR slot=%u sock=%d msgid=%u "
-                   "ret=%d errno=%d clients=0x%x",
-                   slot,
-                   sock,
-                   (unsigned)msgid,
-                   ret,
-                   saved_errno,
-                   (unsigned)psc_clients_used_snapshot(PSC));
-
-            /*
-             * Invalidate the client only if this slot still refers to
-             * the same socket on which the error occurred.
-             */
-            sys_mutex_lock(&PSC->clientguard);
-
-            if ((PSC->clients_used & (1u << idx)) &&
-                C->sock == sock) {
-                C->sock = -1;
-                do_shutdown = 1;
-            }
-
-            sys_mutex_unlock(&PSC->clientguard);
-
-            if (do_shutdown) {
-                int shutdown_ret;
-                int shutdown_errno;
-
-                /*
-                 * Wake handle_client() out of recv().
-                 *
-                 * DO NOT close() here.  handle_client() owns the
-                 * one and only close() for an established connection.
-                 */
-                shutdown_ret = shutdown(sock, SHUT_RDWR);
-                shutdown_errno = errno;
-
-                if (shutdown_ret == -1) {
-                    NETLOG("SHUTDOWN ERROR slot=%u sock=%d errno=%d",
-                           slot,
-                           sock,
-                           shutdown_errno);
-                } else {
-                    NETLOG("SHUTDOWN slot=%u sock=%d",
-                           slot,
-                           sock);
-                }
-            }
-        }
+        psc_request_disconnect(PSC, sock);
     }
 
     sys_mutex_unlock(&PSC->sendguard);
@@ -717,126 +584,12 @@ void psc_send_one(psc_client *C,
                   uint32_t msglen,
                   const void *msg)
 {
-    struct psc_key *PSC;
-    TickType_t wait_start;
-    TickType_t wait_elapsed;
-    int sock = -1;
-    unsigned slot = 0;
-    int active = 0;
-
+    /*
+     * There is exactly one client, so "send one" and "send all" are the same
+     * operation.  Keeping this wrapper preserves the existing public API.
+     */
     if (!C || !C->PSC)
         return;
 
-    PSC = C->PSC;
-
-    wait_start = xTaskGetTickCount();
-
-    sys_mutex_lock(&PSC->sendguard);
-
-    wait_elapsed = xTaskGetTickCount() - wait_start;
-
-    if (wait_elapsed > pdMS_TO_TICKS(NET_SLOW_MS)) {
-        NETLOG("SLOW SEND_ONE SENDGUARD WAIT msgid=%u "
-               "time=%lu ms clients=0x%x",
-               (unsigned)msgid,
-               (unsigned long)(((uint64_t)wait_elapsed * 1000ULL) /
-                               (uint64_t)configTICK_RATE_HZ),
-               (unsigned)psc_clients_used_snapshot(PSC));
-    }
-
-    /*
-     * Re-check the client under clientguard after acquiring sendguard.
-     * The connection state may have changed while this task waited.
-     */
-    sys_mutex_lock(&PSC->clientguard);
-
-    if (C->PSC == PSC &&
-        C->index < PSC_MAX_CLIENTS &&
-        (PSC->clients_used & (1u << C->index))) {
-        active = 1;
-        slot = C->index;
-        sock = C->sock;
-    }
-
-    sys_mutex_unlock(&PSC->clientguard);
-
-    if (active && sock >= 0) {
-
-        int ret;
-        int saved_errno;
-        TickType_t send_start;
-        TickType_t send_elapsed;
-
-        send_start = xTaskGetTickCount();
-
-        ret = psc_sendmsg(sock,
-                          msgid,
-                          msg,
-                          msglen,
-                          0);
-
-        saved_errno = errno;
-        send_elapsed = xTaskGetTickCount() - send_start;
-
-        if (send_elapsed > pdMS_TO_TICKS(NET_SLOW_MS)) {
-            NETLOG("SLOW SEND_ONE slot=%u sock=%d msgid=%u "
-                   "time=%lu ms ret=%d errno=%d",
-                   slot,
-                   sock,
-                   (unsigned)msgid,
-                   (unsigned long)(((uint64_t)send_elapsed * 1000ULL) /
-                                   (uint64_t)configTICK_RATE_HZ),
-                   ret,
-                   saved_errno);
-        }
-
-        if (ret) {
-            int do_shutdown = 0;
-
-            NETLOG("TX ONE ERROR slot=%u sock=%d msgid=%u "
-                   "ret=%d errno=%d clients=0x%x",
-                   slot,
-                   sock,
-                   (unsigned)msgid,
-                   ret,
-                   saved_errno,
-                   (unsigned)psc_clients_used_snapshot(PSC));
-
-            sys_mutex_lock(&PSC->clientguard);
-
-            if (C->PSC == PSC &&
-                C->index == slot &&
-                (PSC->clients_used & (1u << slot)) &&
-                C->sock == sock) {
-                C->sock = -1;
-                do_shutdown = 1;
-            }
-
-            sys_mutex_unlock(&PSC->clientguard);
-
-            if (do_shutdown) {
-                int shutdown_ret;
-                int shutdown_errno;
-
-                /*
-                 * Wake handle_client().  It will do the actual close().
-                 */
-                shutdown_ret = shutdown(sock, SHUT_RDWR);
-                shutdown_errno = errno;
-
-                if (shutdown_ret == -1) {
-                    NETLOG("SHUTDOWN ONE ERROR slot=%u sock=%d errno=%d",
-                           slot,
-                           sock,
-                           shutdown_errno);
-                } else {
-                    NETLOG("SHUTDOWN ONE slot=%u sock=%d",
-                           slot,
-                           sock);
-                }
-            }
-        }
-    }
-
-    sys_mutex_unlock(&PSC->sendguard);
+    psc_send(C->PSC, msgid, msglen, msg);
 }

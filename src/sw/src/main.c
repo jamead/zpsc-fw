@@ -149,7 +149,7 @@ static void realmain(void *arg)
     xil_printf("Starting TFTP server...\r\n");
     tftp_setup();
 
-    const psc_config conf = {
+    static const psc_config conf = {
         .port = 3000,
         .start = on_startup,
         .conn = client_event,
