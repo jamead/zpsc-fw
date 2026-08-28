@@ -24,12 +24,43 @@
  *     handle_client() is the ONLY code that close()s an established
  *     client socket.
  *
- * TX tasks may request that the connection be torn down, but they do not
- * close or shutdown the socket from another thread.  handle_client() sees
- * the request on the next receive/keep-alive, or when SO_RCVTIMEO expires.
+ * A reconnect or TX error may call shutdown() from another task.  shutdown()
+ * is used only to wake a handle_client() task which may be blocked inside
+ * recv()/psc_recvmsg().  The handle_client() task still owns the one and only
+ * close() of the established socket.
  */
 
 #define NET_SLOW_MS 1000u
+
+/*
+ * Diagnostic state for the one handle_client task.
+ *
+ * If the connection ever gets stuck again, the reconnect log tells us
+ * exactly where the old client task was when the IOC tried to reconnect.
+ */
+enum client_state {
+    CLIENT_STATE_INACTIVE = 0,
+    CLIENT_STATE_STARTING,
+    CLIENT_STATE_IN_RECV,
+    CLIENT_STATE_IN_CALLBACK,
+    CLIENT_STATE_CLEANUP,
+    CLIENT_STATE_WAIT_SENDGUARD,
+    CLIENT_STATE_CLOSING
+};
+
+static const char *client_state_name(unsigned state)
+{
+    switch (state) {
+    case CLIENT_STATE_INACTIVE:       return "INACTIVE";
+    case CLIENT_STATE_STARTING:       return "STARTING";
+    case CLIENT_STATE_IN_RECV:        return "IN_RECV";
+    case CLIENT_STATE_IN_CALLBACK:    return "IN_CALLBACK";
+    case CLIENT_STATE_CLEANUP:        return "CLEANUP";
+    case CLIENT_STATE_WAIT_SENDGUARD: return "WAIT_SENDGUARD";
+    case CLIENT_STATE_CLOSING:        return "CLOSING";
+    default:                          return "UNKNOWN";
+    }
+}
 
 static unsigned long net_uptime_ms(void)
 {
@@ -68,6 +99,10 @@ struct psc_key {
 
     int client_active;
     int disconnect_requested;
+
+    /* Written by handle_client(), read by listener/TX paths for diagnostics. */
+    volatile unsigned client_state;
+
     struct psc_client client;
 };
 
@@ -121,20 +156,55 @@ static void psc_client_snapshot(struct psc_key *PSC,
 /*
  * Request cleanup of the currently active socket.
  *
- * No shutdown() or close() is done here.  The receive task owns cleanup.
- * With the IOC's 1 Hz keep-alive this is normally noticed within one second;
- * SO_RCVTIMEO provides the fallback if RX traffic has stopped completely.
+ * Setting disconnect_requested alone is not sufficient: handle_client() may
+ * be blocked inside psc_recvmsg()/recv() and therefore never get back to the
+ * top of its loop to notice the flag.
+ *
+ * shutdown(SHUT_RDWR) wakes the blocked receive.  We intentionally do NOT
+ * close() the socket here.  handle_client() remains the sole owner of close().
  */
 static void psc_request_disconnect(struct psc_key *PSC, int expected_sock)
 {
+    int do_shutdown = 0;
+    unsigned state;
+
     sys_mutex_lock(&PSC->clientguard);
 
     if (PSC->client_active &&
         PSC->client.sock == expected_sock) {
         PSC->disconnect_requested = 1;
+        do_shutdown = 1;
     }
 
+    state = PSC->client_state;
+
     sys_mutex_unlock(&PSC->clientguard);
+
+    if (do_shutdown) {
+        int ret;
+        int saved_errno;
+
+        NETLOG("FORCING SHUTDOWN sock=%d state=%u(%s)",
+               expected_sock,
+               state,
+               client_state_name(state));
+
+        ret = shutdown(expected_sock, SHUT_RDWR);
+        saved_errno = errno;
+
+        if (ret == -1) {
+            NETLOG("SHUTDOWN ERROR sock=%d errno=%d state=%u(%s)",
+                   expected_sock,
+                   saved_errno,
+                   state,
+                   client_state_name(state));
+        } else {
+            NETLOG("SHUTDOWN DONE sock=%d state=%u(%s)",
+                   expected_sock,
+                   state,
+                   client_state_name(state));
+        }
+    }
 }
 
 
@@ -188,8 +258,8 @@ static void psc_configure_client_socket(int sock)
 #if LWIP_SO_RCVTIMEO
     /*
      * The IOC sends a 1 Hz keep-alive.  Five seconds with no receive traffic
-     * is treated as a dead connection.  This timeout is also what guarantees
-     * that a TX-side disconnect request can eventually wake a blocked RX task.
+     * is treated as a dead connection.  shutdown() is used for immediate
+     * reconnect/TX-error wakeup; this timeout remains a second line of defense.
      */
 #  if LWIP_SO_SNDRCVTIMEO_NONSTANDARD
     val = 5000;                  /* milliseconds */
@@ -200,7 +270,7 @@ static void psc_configure_client_socket(int sock)
                    sizeof(val)) == -1) {
 #  else
     {
-        struct timeval tv = {10, 0}; /* seconds, microseconds */
+        struct timeval tv = {5, 0}; /* seconds, microseconds */
         if (setsockopt(sock,
                        SOL_SOCKET,
                        SO_RCVTIMEO,
@@ -215,7 +285,7 @@ static void psc_configure_client_socket(int sock)
     }
 #  endif
 #else
-    NETLOG("WARNING: LWIP_SO_RCVTIMEO is disabled; reconnect cleanup may block");
+    NETLOG("WARNING: LWIP_SO_RCVTIMEO is disabled; heartbeat timeout unavailable");
 #endif
 }
 
@@ -242,6 +312,7 @@ void psc_run(psc_key **key, const psc_config *config)
     PSC->client.PSC = PSC;
     PSC->client_active = 0;
     PSC->disconnect_requested = 0;
+    PSC->client_state = CLIENT_STATE_INACTIVE;
 
     PERROR(sys_mutex_new(&PSC->sendguard) != ERR_OK, "sendguard");
     PERROR(sys_mutex_new(&PSC->clientguard) != ERR_OK, "clientguard");
@@ -314,15 +385,24 @@ void psc_run(psc_key **key, const psc_config *config)
          * Most importantly, there is no client-slot allocation to leak.
          */
         if (active) {
-            psc_request_disconnect(PSC, oldsock);
+            unsigned state = PSC->client_state;
 
-            NETLOG("RECONNECT REQUEST peer=%s:%d; "
-                   "requesting old sock=%d cleanup and rejecting sock=%d",
+            NETLOG("RECONNECT REQUEST peer=%s:%d old_sock=%d "
+                   "state=%u(%s); forcing old cleanup and rejecting sock=%d",
                    inet_ntoa(caddr.sin_addr.s_addr),
                    ntohs(caddr.sin_port),
                    oldsock,
+                   state,
+                   client_state_name(state),
                    client);
 
+            psc_request_disconnect(PSC, oldsock);
+
+            /*
+             * Keep the single-client ownership simple.  This newly accepted
+             * socket is not handed to the application.  The IOC will retry
+             * after the old handler has finished closing its socket.
+             */
             close(client);
             continue;
         }
@@ -338,6 +418,7 @@ void psc_run(psc_key **key, const psc_config *config)
         PSC->client.peeraddr = caddr;
         PSC->client.PSC = PSC;
         PSC->disconnect_requested = 0;
+        PSC->client_state = CLIENT_STATE_STARTING;
         PSC->client_active = 1;
 
         sys_mutex_unlock(&PSC->clientguard);
@@ -377,13 +458,19 @@ static void handle_client(void *raw)
     peeraddr = C->peeraddr;
     sys_mutex_unlock(&PSC->clientguard);
 
-    NETLOG("HANDLE START sock=%d peer=%s:%d",
+    PSC->client_state = CLIENT_STATE_STARTING;
+
+    NETLOG("HANDLE START sock=%d peer=%s:%d state=%u(%s)",
            sock,
            inet_ntoa(peeraddr.sin_addr.s_addr),
-           ntohs(peeraddr.sin_port));
+           ntohs(peeraddr.sin_port),
+           PSC->client_state,
+           client_state_name(PSC->client_state));
 
-    if (PSC->conf->conn)
+    if (PSC->conf->conn) {
+        PSC->client_state = CLIENT_STATE_IN_CALLBACK;
         (*PSC->conf->conn)(PSC->conf->pvt, PSC_CONN, C);
+    }
 
     while (1) {
         uint16_t msgid;
@@ -407,6 +494,8 @@ static void handle_client(void *raw)
             break;
         }
 
+        PSC->client_state = CLIENT_STATE_IN_RECV;
+
         ret = psc_recvmsg(sock,
                           &msgid,
                           C->rxbuf,
@@ -416,12 +505,14 @@ static void handle_client(void *raw)
         if (ret) {
             int saved_errno = errno;
 
-            NETLOG("RX ERROR sock=%d ret=%d errno=%d peer=%s:%d",
+            NETLOG("RX ERROR sock=%d ret=%d errno=%d peer=%s:%d state=%u(%s)",
                    sock,
                    ret,
                    saved_errno,
                    inet_ntoa(peeraddr.sin_addr.s_addr),
-                   ntohs(peeraddr.sin_port));
+                   ntohs(peeraddr.sin_port),
+                   PSC->client_state,
+                   client_state_name(PSC->client_state));
 
             break;
         }
@@ -439,6 +530,8 @@ static void handle_client(void *raw)
         if (!active || current_sock != sock || disconnect_requested)
             break;
 
+        PSC->client_state = CLIENT_STATE_IN_CALLBACK;
+
         (*PSC->conf->recv)(PSC->conf->pvt,
                            C,
                            msgid,
@@ -449,18 +542,33 @@ static void handle_client(void *raw)
     /*
      * Tell the application while C still describes this connection.
      */
-    if (PSC->conf->conn)
+    PSC->client_state = CLIENT_STATE_CLEANUP;
+
+    if (PSC->conf->conn) {
+        PSC->client_state = CLIENT_STATE_IN_CALLBACK;
         (*PSC->conf->conn)(PSC->conf->pvt, PSC_DIS, C);
+        PSC->client_state = CLIENT_STATE_CLEANUP;
+    }
 
     /*
      * Wait until any in-progress psc_send()/psc_send_one() finishes.  The
      * socket send timeout should bound this wait even if the IOC stops reading.
      */
-    NETLOG("CLEANUP WAIT SENDGUARD sock=%d", sock);
+    PSC->client_state = CLIENT_STATE_WAIT_SENDGUARD;
+
+    NETLOG("CLEANUP WAIT SENDGUARD sock=%d state=%u(%s)",
+           sock,
+           PSC->client_state,
+           client_state_name(PSC->client_state));
 
     sys_mutex_lock(&PSC->sendguard);
 
-    NETLOG("CLEANUP GOT SENDGUARD sock=%d", sock);
+    PSC->client_state = CLIENT_STATE_CLOSING;
+
+    NETLOG("CLEANUP GOT SENDGUARD sock=%d state=%u(%s)",
+           sock,
+           PSC->client_state,
+           client_state_name(PSC->client_state));
 
     /*
      * handle_client() is the one and only owner of close() for an established
@@ -488,6 +596,7 @@ static void handle_client(void *raw)
         PSC->client.sock = -1;
         PSC->client_active = 0;
         PSC->disconnect_requested = 0;
+        PSC->client_state = CLIENT_STATE_INACTIVE;
     }
 
     sys_mutex_unlock(&PSC->clientguard);
@@ -570,7 +679,8 @@ void psc_send(psc_key *PSC,
                saved_errno);
 
         /*
-         * Do not close/shutdown from this TX task.  The RX handler owns close().
+         * Request shutdown to wake a possibly blocked receive.  This TX task
+         * still does not close() the socket; handle_client() owns close().
          */
         psc_request_disconnect(PSC, sock);
     }
