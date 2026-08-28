@@ -35,11 +35,18 @@ extern struct netif server_netif;
 void net_setup(net_config *conf);
 void discover_setup(void);
 void tftp_setup(void);
-void lstats_setup(void);
-void bpc_setup(void);
-void sadata_setup(void);
-void snapshot_setup(void);
 void console_setup(void);
+
+/* Periodic network data.  Called from the one psc_run() network thread. */
+void pscdata_init(void);
+void pscdata_poll(psc_key *key);
+void sadata_send(psc_key *key);
+void lstats_init(void);
+void lstats_send(psc_key *key);
+void snapshot_init(void);
+void snapshot_process(psc_key *key);
+void bpc_init(void);
+void bpc_send(psc_key *key);
 void sdcard_handle(net_config *conf);
 void init_i2c(void);
 void i2c_get_mac_address();

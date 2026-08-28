@@ -36,7 +36,7 @@ void hton_conv(char *inbuf, int len) {
 
 // This information is send to the IOC at ~10Hz
 static
-void SendSnapShotStats(char *msg, TriggerTypes *trig) {
+void SendSnapShotStats(psc_key *PSC, char *msg, TriggerTypes *trig) {
 
    struct SnapStatsMsg snapstats;
    u32 i;
@@ -76,7 +76,7 @@ void SendSnapShotStats(char *msg, TriggerTypes *trig) {
    //copy the structure to the PSC msg buffer
    memcpy(msg,&snapstats,sizeof(snapstats));
    hton_conv(msg,sizeof(snapstats));
-   psc_send(the_server, MSGWFMSTATS , MSGWFMSTATSLEN, msg);
+   psc_send(PSC, MSGWFMSTATS , MSGWFMSTATSLEN, msg);
 
 }
 
@@ -322,7 +322,7 @@ void ReadDMABuf(char *msg, TriggerInfo *trig) {
 
 
 static
-s32 SendWfmData(char *msg, TriggerInfo *trig) {
+s32 SendWfmData(psc_key *PSC, char *msg, TriggerInfo *trig) {
 
 
 
@@ -334,7 +334,7 @@ s32 SendWfmData(char *msg, TriggerInfo *trig) {
 
 
 	//hton_conv(msg,MSGWFMLEN);
-	//psc_send(the_server, trig->msgID, MSGWFMLEN, msg);
+	//psc_send(PSC, trig->msgID, MSGWFMLEN, msg);
 
 	if ((trig->msgID == MSGINJCH1) || (trig->msgID == MSGINJCH2) ||
 		(trig->msgID == MSGINJCH3) || (trig->msgID == MSGINJCH4)) {
@@ -342,13 +342,13 @@ s32 SendWfmData(char *msg, TriggerInfo *trig) {
 		//Inj Trigger only wants 1k points
 		hton_conv(msg,MSGINJWFMLEN);
 		//xil_printf("SendWfmData TrigNum: %d: Ch%d  Calling psc_send...",trig->trigcnt,(trig->msgID & 0x3)+1);
-		psc_send(the_server, trig->msgID, MSGINJWFMLEN, msg);
+		psc_send(PSC, trig->msgID, MSGINJWFMLEN, msg);
 		//xil_printf("    Done\r\n");
 	}
 	else {
 		//xil_printf("Sending Other Snapshot:  %d\r\n",trig->msgID);
 		hton_conv(msg,MSGWFMLEN);
-		psc_send(the_server, trig->msgID, MSGWFMLEN, msg);
+		psc_send(PSC, trig->msgID, MSGWFMLEN, msg);
 	}
 
 
@@ -522,57 +522,40 @@ void InitTriggerInfo(struct TriggerTypes * trig) {
 
 
 
-static
-void snapshot_push(void *unused)
+
+/* Snapshot state persists between 100 ms calls from pscdata_poll(). */
+static struct TriggerTypes snapshot_trig;
+
+/* Waveform buffers.  EVR waveform transmission is currently disabled. */
+static char msgUsr_buf[4][MSGWFMLEN];
+static char msgFlt_buf[4][MSGWFMLEN];
+static char msgErr_buf[4][MSGWFMLEN];
+static char msgInj_buf[4][MSGWFMLEN];
+static char msgWfmStats_buf[MSGWFMSTATSLEN];
+
+void snapshot_init(void)
 {
-
-	//portTASK_USES_FLOATING_POINT();
-
-	(void)unused;
-
-	struct TriggerTypes trig;
-
-	// Waveform Buffers for Snapshots
-	static char msgUsr_buf[4][MSGWFMLEN];
-	static char msgFlt_buf[4][MSGWFMLEN];
-	static char msgErr_buf[4][MSGWFMLEN];
-	static char msgInj_buf[4][MSGWFMLEN];
-	static char msgEvr_buf[4][MSGWFMLEN];
-
-	static char msgWfmStats_buf[MSGWFMSTATSLEN];
-
-	InitTriggerInfo(&trig);
-
-
-    while(1) {
-        vTaskDelay(pdMS_TO_TICKS(100));
-
-		CheckforTriggers(&trig);
-
-        // Scan through all the trigger types, send waveform if there was a trigger
-		for (int i = 0; i < 4; ++i) {
-		    if (trig.usr[i].sendbuf == 1)
-		        SendWfmData(msgUsr_buf[i], &trig.usr[i]);
-		    if (trig.flt[i].sendbuf == 1)
-		        SendWfmData(msgFlt_buf[i], &trig.flt[i]);
-		    if (trig.err[i].sendbuf == 1)
-		        SendWfmData(msgErr_buf[i], &trig.err[i]);
-		    if (trig.inj[i].sendbuf == 1)
-		        SendWfmData(msgInj_buf[i], &trig.inj[i]);
-		    //if (trig.evr[i].sendbuf == 1)
-		    //    SendWfmData(msgEvr_buf[i], &trig.evr[i]);
-		}
-
-        // Send waveform trigger information
-		SendSnapShotStats(msgWfmStats_buf,&trig);
-
-    }
+    InitTriggerInfo(&snapshot_trig);
+    printf("INFO: Initializing snapshot processing\n");
 }
 
-
-void snapshot_setup(void)
+void snapshot_process(psc_key *PSC)
 {
-    printf("INFO: Starting Snapshot data daemon\n");
+    TriggerTypes *trig = &snapshot_trig;
 
-    sys_thread_new("snapshot", snapshot_push, NULL, THREAD_STACKSIZE, DEFAULT_THREAD_PRIO-1);
+    CheckforTriggers(trig);
+
+    /* Scan all trigger types and send any completed waveform. */
+    for (int i = 0; i < 4; ++i) {
+        if (trig->usr[i].sendbuf == 1)
+            SendWfmData(PSC, msgUsr_buf[i], &trig->usr[i]);
+        if (trig->flt[i].sendbuf == 1)
+            SendWfmData(PSC, msgFlt_buf[i], &trig->flt[i]);
+        if (trig->err[i].sendbuf == 1)
+            SendWfmData(PSC, msgErr_buf[i], &trig->err[i]);
+        if (trig->inj[i].sendbuf == 1)
+            SendWfmData(PSC, msgInj_buf[i], &trig->inj[i]);
+    }
+
+    SendSnapShotStats(PSC, msgWfmStats_buf, trig);
 }

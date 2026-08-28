@@ -21,15 +21,9 @@ static XSysMon xmon;
 
 
 
-static
-void lstats_push(void *unused)
+void lstats_send(psc_key *PSC)
 {
-    (void)unused;
-
     char ip_addr[16];
-
-    while(1) {
-        vTaskDelay(pdMS_TO_TICKS(500));
 
         struct {
             uint32_t uptime;  // 0
@@ -128,14 +122,13 @@ void lstats_push(void *unused)
 
 
 
-        psc_send(the_server, 11, sizeof(ip_addr), &ip_addr);
-        psc_send(the_server, 10, sizeof(msg), &msg);
-    }
+        psc_send(PSC, 11, sizeof(ip_addr), &ip_addr);
+        psc_send(PSC, 10, sizeof(msg), &msg);
 }
 
-void lstats_setup(void)
+void lstats_init(void)
 {
-    printf("INFO: Starting stats daemon\n");
+    printf("INFO: Initializing statistics\n");
 
 
     {
@@ -151,6 +144,4 @@ void lstats_setup(void)
         }
     }
 
-
-    sys_thread_new("lstats", lstats_push, NULL, THREAD_STACKSIZE, DEFAULT_THREAD_PRIO);
 }

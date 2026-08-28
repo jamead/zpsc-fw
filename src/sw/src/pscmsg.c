@@ -158,13 +158,20 @@ int psc_recvmsg(int sock,
     if(ret)
         goto done;
 
-    rlen = mlen>maxlen ? maxlen : mlen;
+    /*
+     * A bad/corrupt length must not make us sit here draining an arbitrary
+     * amount of data.  Drop the TCP connection and let the IOC reconnect.
+     */
+    if(mlen > maxlen) {
+        *msgid = mid;
+        *msglen = mlen;
+        return EMSGSIZE;
+    }
+
+    rlen = mlen;
     ret = psc_recvall(sock, buf, rlen, flags);
     if(ret)
         goto done;
-
-    if(rlen<mlen)
-        ret=psc_recvskip(sock, mlen-rlen, flags);
 
     *msgid = mid;
     *msglen = rlen;

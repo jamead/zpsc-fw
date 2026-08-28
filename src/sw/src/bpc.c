@@ -20,16 +20,9 @@
 
 
 
-static void bpc_push(void *unused)
+void bpc_init(void)
 {
-    static u32 msg[60];
-	u32 numwords, i;
-
-	union {
-	    u32   u;
-	    float f;
-	} data;
-
+    u32 numwords;
 
     numwords = Xil_In32(XPAR_M_AXI_BASEADDR + CHBASEADDR + MANCH_FIFO_WDCNT_REG);
     xil_printf("Number of Words in Manch FIFO : %d\r\n",numwords);
@@ -40,8 +33,18 @@ static void bpc_push(void *unused)
     Xil_Out32(XPAR_M_AXI_BASEADDR + CHBASEADDR + MANCH_FIFO_RESET_REG, 0);
 
 
-    while (1) {
-      	vTaskDelay(pdMS_TO_TICKS(500));
+}
+
+void bpc_send(psc_key *PSC)
+{
+    static u32 msg[60];
+	u32 numwords, i;
+
+	union {
+	    u32   u;
+	    float f;
+	} data;
+
         numwords = Xil_In32(XPAR_M_AXI_BASEADDR + CHBASEADDR + MANCH_FIFO_WDCNT_REG);
         //xil_printf("Number of Words in Manch FIFO : %d\r\n",numwords);
         if (numwords >= 62) {
@@ -58,14 +61,5 @@ static void bpc_push(void *unused)
         }
 
 
-    psc_send(the_server, 15, sizeof(msg), msg);
-    }
-
+    psc_send(PSC, 15, sizeof(msg), msg);
 }
-
-void bpc_setup(void)
-{
-    printf("INFO: Starting bpc daemon\n");
-    sys_thread_new("bpc", bpc_push, NULL, THREAD_STACKSIZE, DEFAULT_THREAD_PRIO);
-}
-

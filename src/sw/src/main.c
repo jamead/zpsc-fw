@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <unistd.h>
+#include <time.h>
 
 
 #include "xil_cache.h"
@@ -114,21 +115,12 @@ static void on_startup(void *pvt, psc_key *key)
 {
     (void)pvt;
     (void)key;
-    u32 polarity;
 
-    lstats_setup();
+    /* Periodic network data now runs inside psc_run(); no TX tasks are created. */
+    pscdata_init();
 
-    sadata_setup();
-    snapshot_setup();
+    /* Console remains an independent FreeRTOS task. */
     console_setup();
-
-    polarity = Xil_In32(XPAR_M_AXI_BASEADDR + POLARITY_REG);
-    if (polarity == 0)  {
-      xil_printf("Bipolar, add BPC Thread\r\n");
-      bpc_setup();
-    }
-
-
 }
 
 static void realmain(void *arg)

@@ -87,9 +87,9 @@ int psc_recvhead(int sock,
  * size.  On success it will set with the actual message
  * length.
  *
- * If the actual message length exceeds the buffer size
- * then psc_recvmsg() succeeds with a truncated message.
- * The remaining bytes are read and discarded.
+ * If the actual message length exceeds the buffer size, psc_recvmsg()
+ * returns EMSGSIZE.  The caller should close the connection and reconnect;
+ * the oversized payload is intentionally not drained.
  *
  * @returns 0 on success
  */

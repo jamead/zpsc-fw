@@ -61,18 +61,12 @@ float ReadAccumSA(u32 reg_addr, u32 ave_mode) {
 }
 
 
-static
-void sadata_push(void *unused)
+void sadata_send(psc_key *PSC)
 {
-    (void)unused;
     u32 chan, base, ave_mode;
     static char msg[1400];
     struct SAdataMsg sadata;
 
-
-
-    while(1) {
-        vTaskDelay(pdMS_TO_TICKS(95));
 
         //blink front panel LED
         Xil_Out32(XPAR_M_AXI_BASEADDR + TENHZ_DATASEND_REG, 1);
@@ -194,13 +188,5 @@ void sadata_push(void *unused)
         memcpy(&msg,&sadata,sizeof(sadata));
 
         hton_conv(msg,sizeof(sadata));
-        psc_send(the_server, 31, sizeof(msg), &msg);
-    }
-}
-
-void sadata_setup(void)
-{
-    printf("INFO: Starting 10Hz data daemon\n");
-
-    sys_thread_new("sadata", sadata_push, NULL, THREAD_STACKSIZE, DEFAULT_THREAD_PRIO);
+        psc_send(PSC, 31, sizeof(msg), &msg);
 }
