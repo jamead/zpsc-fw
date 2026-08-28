@@ -245,6 +245,12 @@ int main(void) {
 	usleep(100);
 	ReadHardwareFlavor();
 
+	// Enable Park
+	xil_printf("Enabling Park for all channels\r\n");
+	Xil_Out32(XPAR_M_AXI_BASEADDR + DIGOUT_PARK_REG + 1*CHBASEADDR, 1);
+	Xil_Out32(XPAR_M_AXI_BASEADDR + DIGOUT_PARK_REG + 2*CHBASEADDR, 1);
+	Xil_Out32(XPAR_M_AXI_BASEADDR + DIGOUT_PARK_REG + 3*CHBASEADDR, 1);
+	Xil_Out32(XPAR_M_AXI_BASEADDR + DIGOUT_PARK_REG + 4*CHBASEADDR, 1);
 
 	//EVR reset
     xil_printf("Leaving EVR GTX in reset...\r\n");
