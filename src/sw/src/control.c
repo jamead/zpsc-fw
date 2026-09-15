@@ -158,7 +158,7 @@ void Calc_WriteRaisedCosineSmooth(u32 chan, s32 new_setpt) {
 	float ramp_rate, ramp_duration;
 	u32 maindipole_mode;
 
-	xil_printf("In Write Cosine Smooth...\r\n");
+	//xil_printf("In Write Cosine Smooth...\r\n");
     //xil_printf("\r\nCalculating Raised Cosine Smooth Ramp Values...\r\n");
 
 	//Cordic Starts at -PI and goes to 0
@@ -170,10 +170,10 @@ void Calc_WriteRaisedCosineSmooth(u32 chan, s32 new_setpt) {
 
 	//calculate the length of the smooth length using the ramp rate scale factor
 	ramp_rate = (scalefactors[chan-1].ampspersec / scalefactors[chan-1].dac_dccts) * CONVVOLTSTODACBITS;  // in bits/sec
-	printf("Ramp Rate: %f (bits/sec) \r\n",ramp_rate);
+	//printf("Ramp Rate: %f (bits/sec) \r\n",ramp_rate);
 
 	ramp_duration = abs(new_setpt - cur_setpt) / ramp_rate;
-	printf("Ramps Duration: %f (sec)\r\n",ramp_duration);
+	//printf("Ramps Duration: %f (sec)\r\n",ramp_duration);
 
 	// if in main dipole main, ramp duration minimum length is always 2 seconds
 	maindipole_mode = Xil_In32(XPAR_M_AXI_BASEADDR + MAIN_DIPOLE_MODE_REG);
@@ -182,17 +182,17 @@ void Calc_WriteRaisedCosineSmooth(u32 chan, s32 new_setpt) {
 	   printf("Adjusted Ramp Duration: %f (sec)\r\n",ramp_duration);
 	}
 	num_samples = ramp_duration * SAMPLERATE;
-	xil_printf("Ramp Duration: %d (samples)\r\n", num_samples);
+	//xil_printf("Ramp Duration: %d (samples)\r\n", num_samples);
 
 
 	smooth_len = (u32)(abs(new_setpt - cur_setpt) / ramp_rate * SAMPLERATE);
-	xil_printf("Smooth Length: %d\r\n",smooth_len);
+	//xil_printf("Smooth Length: %d\r\n",smooth_len);
 
 	//calculate phase increment for CORDIC
 	//Cordic Starts at -PI (
 	//cordic phase is 1.2.31 format  3.14/4 * 2^31 = 421657428
 	phase_inc = CORDIC_INIT_PHASE / num_samples;
-	printf("CORDIC Phase Inc = %f\r\n",phase_inc);
+	//printf("CORDIC Phase Inc = %f\r\n",phase_inc);
 
 	//write the phase inc
 	Xil_Out32(XPAR_M_AXI_BASEADDR + SMOOTH_PHASEINC_REG + chan*CHBASEADDR, phase_inc);
@@ -447,11 +447,11 @@ void Set_dac(u32 chan, float new_setpt_amps) {
         new_setpt = 0;
     }
 
-	printf("New DAC Setpt: %f    %d\r\n",new_setpt_amps, (int)new_setpt);
+	//printf("New DAC Setpt: %f    %d\r\n",new_setpt_amps, (int)new_setpt);
 
 
 	if (dac_mode == SMOOTH) {
-        xil_printf("In Smooth Mode\r\n");
+        //xil_printf("In Smooth Mode\r\n");
         if (smoothramp_type == 1)
           Calc_WriteRaisedCosineSmooth(chan, new_setpt);
         else
@@ -459,8 +459,8 @@ void Set_dac(u32 chan, float new_setpt_amps) {
 	}
 
 	else if (dac_mode == JUMP) {
-        xil_printf("In Jump Mode\r\n");
-        xil_printf("Writing Register...\r\n");
+        //xil_printf("In Jump Mode\r\n");
+        //xil_printf("Writing Register...\r\n");
 		Xil_Out32(XPAR_M_AXI_BASEADDR + DAC_SETPT_REG + chan*CHBASEADDR, new_setpt);
 	}
 
@@ -557,8 +557,8 @@ void chan_settings(u32 chan, void *msg, u32 msglen) {
 
 	addr = htonl(msgptr[0]);
 	data.u = htonl(msgptr[1]);
-	xil_printf("MsgLen=%d\r\n",msglen);
-	printf("Chan: %d Addr: %d   Data(i): %d   Data(f): %f\r\n",(int)chan,(int)addr,(int)data.u,data.f);
+	//xil_printf("MsgLen=%d\r\n",msglen);
+	//printf("Chan: %d Addr: %d   Data(i): %d   Data(f): %f\r\n",(int)chan,(int)addr,(int)data.u,data.f);
 
 
 
@@ -572,7 +572,7 @@ void chan_settings(u32 chan, void *msg, u32 msglen) {
 
         case DAC_SETPT_MSG:
         	scaled_val = data.f*CONVVOLTSTODACBITS / scalefactors[chan-1].dac_dccts;
-	        printf("Setting DAC CH%d SetPoint:   Value=%f   Bits=%d\r\n", (int)chan, data.f, (int)scaled_val);
+	        //printf("Setting DAC CH%d SetPoint:   Value=%f   Bits=%d\r\n", (int)chan, data.f, (int)scaled_val);
 	        Set_dac(chan, data.f);
 	        break;
 
