@@ -46,6 +46,7 @@ type state_type is (IDLE, RUN_RAMP, UPDATE_DAC);
 
  
   signal dac_data                : std_logic_vector(19 downto 0);
+  signal dac_data_rdbk           : std_logic_vector(19 downto 0); 
   signal dac_rdaddr              : std_logic_vector(15 downto 0);
   signal dac_rddata              : std_logic_vector(19 downto 0);
   signal dac_rden                : std_logic;
@@ -83,7 +84,7 @@ type state_type is (IDLE, RUN_RAMP, UPDATE_DAC);
 begin
 
 --status readbacks
-dac_stat.dac_setpt <= signed(dac_data); --dac_setpt;
+dac_stat.dac_setpt <= signed(dac_data_rdbk); --dac_setpt;
 dac_stat.active <= ramp_active or smooth_cosine_active or smooth_linear_active;
 
 
@@ -202,8 +203,10 @@ begin
   if rising_edge(clk) then
     if dac_numbits_sel = '1' then
       dac_data <= std_logic_vector(dac_setpt_wlim);
+      dac_data_rdbk <= std_logic_vector(dac_setpt_wlim);
     else
-      dac_data <= std_logic_vector(dac_setpt_wlim(17 downto 0) & "00");
+      dac_data <= std_logic_vector(dac_setpt_wlim(17 downto 0) & "00");  --goes to DAC, last two LSBs are truncated by DAC
+      dac_data_rdbk <= std_logic_vector(dac_setpt_wlim(17) & dac_setpt_wlim(17) & dac_setpt_wlim(17 downto 0)); --For the DAC status monitor going to the ARM, sign extend to 20 bits
     end if;
   end if;
 end process;
